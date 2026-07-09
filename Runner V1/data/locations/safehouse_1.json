@@ -1,0 +1,15 @@
+{
+  "id": "safehouse_1",
+  "name": "Safehouse 1",
+  "type": "safehouse",
+  "description": "A cramped rented room hidden above a closed pawn shop. The blinds are broken, the air smells faintly of dust and hot wiring, and a battered terminal hums quietly in the corner.",
+  "exits": [
+    {
+      "name": "alley",
+      "destination": "back_alley_1",
+      "description": "A narrow stairwell leading down to the alley behind the building."
+    }
+  ],
+  "npcs": [],
+  "items": []
+}
