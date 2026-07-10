@@ -1,22 +1,25 @@
-const fs = require("fs");
 const path = require("path");
+const {
+  createJsonCollectionRepository
+} = require("../repositories/jsonCollectionRepository");
 
-const npcsPath = path.join(__dirname, "../../../data/npcs/npcs.json");
+const npcRepository = createJsonCollectionRepository({
+  filePath: path.join(
+    __dirname,
+    "../../../data/npcs/npcs.json"
+  ),
+  indentation: 2
+});
 
 function loadNpcs() {
-    const npcData = fs.readFileSync(npcsPath, "utf8");
-    return JSON.parse(npcData);
+  return npcRepository.loadAll();
 }
 
 function loadNpc(npcId) {
-    const npcs = loadNpcs();
-
-    return npcs.find(function(npc) {
-        return npc.id === npcId;
-    });
+  return npcRepository.loadById(npcId);
 }
 
 module.exports = {
-    loadNpcs,
-    loadNpc
+  loadNpcs,
+  loadNpc
 };

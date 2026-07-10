@@ -1,22 +1,25 @@
-const fs = require("fs");
 const path = require("path");
+const {
+  createJsonCollectionRepository
+} = require("../repositories/jsonCollectionRepository");
 
-const itemsPath = path.join(__dirname, "../../../data/Items/items.json");
+const itemRepository = createJsonCollectionRepository({
+  filePath: path.join(
+    __dirname,
+    "../../../data/Items/items.json"
+  ),
+  indentation: 2
+});
 
 function loadItems() {
-    const itemData = fs.readFileSync(itemsPath, "utf8");
-    return JSON.parse(itemData);
+  return itemRepository.loadAll();
 }
 
 function loadItem(itemId) {
-    const items = loadItems();
-
-    return items.find(function(item) {
-        return item.id === itemId;
-    });
+  return itemRepository.loadById(itemId);
 }
 
 module.exports = {
-    loadItems,
-    loadItem
+  loadItems,
+  loadItem
 };
