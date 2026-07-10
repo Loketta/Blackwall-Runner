@@ -4,8 +4,18 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 
 const projectRoot = path.resolve(__dirname, "..", "..");
-const entryPoint = path.join(projectRoot, "src", "index.js");
-const liveDataPath = path.join(projectRoot, "data");
+
+const entryPoint = path.join(
+  projectRoot,
+  "src",
+  "index.js"
+);
+
+const liveDataPath = path.join(
+  projectRoot,
+  "data"
+);
+
 const fixtureDataPath = path.join(
   projectRoot,
   "tests",
@@ -13,63 +23,10 @@ const fixtureDataPath = path.join(
   "regression-data"
 );
 
-const tests = [
-  {
-    name: "Player status",
-    args: ["status"],
-    expectedText: "PLAYER STATUS"
-  },
-  {
-    name: "Location description",
-    args: ["look"],
-    expectedText: "Exits:"
-  },
-  {
-    name: "Player inventory",
-    args: ["inventory"],
-    expectedText: "INVENTORY"
-  },
-  {
-    name: "Shop listing",
-    args: ["shop"],
-    expectedText: "Kuroda Mart"
-  },
-  {
-    name: "NPC dialogue",
-    args: ["talk", "Finch"],
-    expectedText: "Finch"
-  },
-  {
-    name: "Open container",
-    args: ["open", "Alley Crate"],
-    expectedText: "Alley Crate"
-  },
-  {
-    name: "Take item from container",
-    args: [
-      "take",
-      "Protein Bar",
-      "from",
-      "Alley Crate"
-    ],
-    expectedText: "Protein Bar"
-  },
-  {
-    name: "Drop item",
-    args: ["drop", "Protein Bar"],
-    expectedText: "Protein Bar"
-  },
-  {
-    name: "Advance world time",
-    args: ["wait", "1"],
-    expectedText: "Time:"
-  },
-  {
-    name: "Status after time advancement",
-    args: ["status"],
-    expectedText: "PLAYER STATUS"
-  }
-];
+const testDefinitionsPath = path.join(
+  __dirname,
+  "commands.json"
+);
 
 function copyDirectory(sourcePath, destinationPath) {
   fs.cpSync(sourcePath, destinationPath, {
@@ -84,6 +41,111 @@ function replaceDirectory(sourcePath, destinationPath) {
   });
 
   copyDirectory(sourcePath, destinationPath);
+}
+
+function loadTestDefinitions() {
+  let contents;
+
+  try {
+    contents = fs.readFileSync(
+      testDefinitionsPath,
+      "utf8"
+    );
+  } catch (error) {
+    throw new Error(
+      `Could not read regression definitions: ${error.message}`
+    );
+  }
+
+  let tests;
+
+  try {
+    tests = JSON.parse(contents);
+  } catch (error) {
+    throw new Error(
+      `Invalid JSON in commands.json: ${error.message}`
+    );
+  }
+
+  validateTestDefinitions(tests);
+
+  return tests;
+}
+
+function validateTestDefinitions(tests) {
+  if (!Array.isArray(tests)) {
+    throw new Error(
+      "commands.json must contain an array of tests."
+    );
+  }
+
+  if (tests.length === 0) {
+    throw new Error(
+      "commands.json must contain at least one test."
+    );
+  }
+
+  tests.forEach(function (test, index) {
+    const testNumber = index + 1;
+
+    if (
+      typeof test.name !== "string" ||
+      test.name.trim() === ""
+    ) {
+      throw new Error(
+        `Test ${testNumber} requires a non-empty name.`
+      );
+    }
+
+    if (
+      !Array.isArray(test.args) ||
+      test.args.length === 0 ||
+      !test.args.every(
+        (argument) => typeof argument === "string"
+      )
+    ) {
+      throw new Error(
+        `Test "${test.name}" requires a string args array.`
+      );
+    }
+
+    if (
+      typeof test.expectedText !== "string" ||
+      test.expectedText === ""
+    ) {
+      throw new Error(
+        `Test "${test.name}" requires expectedText.`
+      );
+    }
+  });
+}
+
+function validatePaths() {
+  if (!fs.existsSync(entryPoint)) {
+    throw new Error(
+      "Application entry point not found: src/index.js"
+    );
+  }
+
+  if (!fs.existsSync(liveDataPath)) {
+    throw new Error(
+      "Live data directory not found: data"
+    );
+  }
+
+  if (!fs.existsSync(fixtureDataPath)) {
+    throw new Error(
+      "Regression fixture not found: " +
+      "tests/fixtures/regression-data"
+    );
+  }
+
+  if (!fs.existsSync(testDefinitionsPath)) {
+    throw new Error(
+      "Regression definitions not found: " +
+      "tests/regression/commands.json"
+    );
+  }
 }
 
 function runTest(test) {
@@ -113,6 +175,29 @@ function runTest(test) {
   };
 }
 
+function formatCommand(args) {
+  return args
+    .map(function (argument) {
+      if (
+        argument.includes(" ") ||
+        argument.includes('"')
+      ) {
+        return `"${argument.replaceAll('"', '\\"')}"`;
+      }
+
+      return argument;
+    })
+    .join(" ");
+}
+
+function indentOutput(output) {
+  return output
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => `      ${line}`)
+    .join("\n");
+}
+
 function printResult(result) {
   const label = result.passed ? "PASS" : "FAIL";
 
@@ -120,73 +205,49 @@ function printResult(result) {
     `${label.padEnd(5)} ${result.name}`
   );
 
-  if (!result.passed) {
-    console.log(
-      `      Command: node src/index.js ${result.args.join(" ")}`
-    );
+  if (result.passed) {
+    return;
+  }
 
-    console.log(
-      `      Expected output containing: ${result.expectedText}`
-    );
+  console.log(
+    "      Command: node src/index.js " +
+    formatCommand(result.args)
+  );
 
-    console.log(
-      `      Exit code: ${result.status}`
-    );
+  console.log(
+    "      Expected output containing: " +
+    result.expectedText
+  );
 
-    if (result.stdout.trim()) {
-      console.log("");
-      console.log("      Standard output:");
-      console.log(
-        result.stdout
-          .trim()
-          .split("\n")
-          .map((line) => `      ${line}`)
-          .join("\n")
-      );
-    }
+  console.log(
+    `      Exit code: ${result.status}`
+  );
 
-    if (result.stderr.trim()) {
-      console.log("");
-      console.log("      Error output:");
-      console.log(
-        result.stderr
-          .trim()
-          .split("\n")
-          .map((line) => `      ${line}`)
-          .join("\n")
-      );
-    }
-
+  if (result.stdout.trim()) {
     console.log("");
-  }
-}
-
-function validatePaths() {
-  if (!fs.existsSync(entryPoint)) {
-    throw new Error(
-      "Application entry point not found: src/index.js"
-    );
+    console.log("      Standard output:");
+    console.log(indentOutput(result.stdout));
   }
 
-  if (!fs.existsSync(liveDataPath)) {
-    throw new Error(
-      "Live data directory not found: data"
-    );
+  if (result.stderr.trim()) {
+    console.log("");
+    console.log("      Error output:");
+    console.log(indentOutput(result.stderr));
   }
 
-  if (!fs.existsSync(fixtureDataPath)) {
-    throw new Error(
-      "Regression fixture not found: " +
-      "tests/fixtures/regression-data"
-    );
-  }
+  console.log("");
 }
 
 function runRegressionSuite() {
   validatePaths();
 
+  const tests = loadTestDefinitions();
+
   const temporaryDirectory = fs.mkdtempSync(
-    path.join(os.tmpdir(), "blackwall-runner-regression-")
+    path.join(
+      os.tmpdir(),
+      "blackwall-runner-regression-"
+    )
   );
 
   const backupDataPath = path.join(
@@ -195,18 +256,39 @@ function runRegressionSuite() {
   );
 
   let failedCount = 0;
+  let liveDataBackedUp = false;
 
-  console.log("================================");
-  console.log("BLACKWALL RUNNER REGRESSION TESTS");
-  console.log("================================");
+  console.log(
+    "================================"
+  );
+
+  console.log(
+    "BLACKWALL RUNNER REGRESSION TESTS"
+  );
+
+  console.log(
+    "================================"
+  );
+
   console.log("");
+  console.log(`Loaded ${tests.length} test definitions.`);
 
   try {
     console.log("Backing up live game data...");
-    copyDirectory(liveDataPath, backupDataPath);
+
+    copyDirectory(
+      liveDataPath,
+      backupDataPath
+    );
+
+    liveDataBackedUp = true;
 
     console.log("Loading regression fixture...");
-    replaceDirectory(fixtureDataPath, liveDataPath);
+
+    replaceDirectory(
+      fixtureDataPath,
+      liveDataPath
+    );
 
     console.log("Running tests...");
     console.log("");
@@ -224,25 +306,43 @@ function runRegressionSuite() {
     console.log("");
     console.log("Restoring live game data...");
 
-    if (fs.existsSync(backupDataPath)) {
-      replaceDirectory(backupDataPath, liveDataPath);
+    if (
+      liveDataBackedUp &&
+      fs.existsSync(backupDataPath)
+    ) {
+      replaceDirectory(
+        backupDataPath,
+        liveDataPath
+      );
+
+      console.log("Live game data restored.");
+    } else {
+      console.error(
+        "Live data was not replaced because " +
+        "the backup did not complete."
+      );
     }
 
     fs.rmSync(temporaryDirectory, {
       recursive: true,
       force: true
     });
-
-    console.log("Live game data restored.");
   }
 
-  const passedCount = tests.length - failedCount;
+  const passedCount =
+    tests.length - failedCount;
 
   console.log("");
-  console.log("================================");
+  console.log(
+    "================================"
+  );
+
   console.log(`${passedCount} passed`);
   console.log(`${failedCount} failed`);
-  console.log("================================");
+
+  console.log(
+    "================================"
+  );
 
   if (failedCount > 0) {
     process.exitCode = 1;

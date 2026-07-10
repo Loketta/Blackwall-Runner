@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Player status",
+    "args": ["status"],
+    "expectedText": "PLAYER STATUS"
+  },
+  {
+    "name": "Location description",
+    "args": ["look"],
+    "expectedText": "Exits:"
+  },
+  {
+    "name": "Player inventory",
+    "args": ["inventory"],
+    "expectedText": "INVENTORY"
+  },
+  {
+    "name": "Shop listing",
+    "args": ["shop"],
+    "expectedText": "Kuroda Mart"
+  },
+  {
+    "name": "NPC dialogue",
+    "args": ["talk", "Finch"],
+    "expectedText": "Finch"
+  },
+  {
+    "name": "Open container",
+    "args": ["open", "Alley Crate"],
+    "expectedText": "Alley Crate"
+  },
+  {
+    "name": "Take item from container",
+    "args": [
+      "take",
+      "Protein Bar",
+      "from",
+      "Alley Crate"
+    ],
+    "expectedText": "Protein Bar"
+  },
+  {
+    "name": "Drop item",
+    "args": ["drop", "Protein Bar"],
+    "expectedText": "Protein Bar"
+  },
+  {
+    "name": "Advance world time",
+    "args": ["wait", "1"],
+    "expectedText": "Time:"
+  },
+  {
+    "name": "Status after time advancement",
+    "args": ["status"],
+    "expectedText": "PLAYER STATUS"
+  }
+]
