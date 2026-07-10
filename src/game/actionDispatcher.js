@@ -2,8 +2,15 @@ const { loadLocation, saveLocation } = require("./locationManager");
 const { movePlayer } = require("./movementManager");
 const { loadWorld, saveWorld } = require("./worldManager");
 const { advanceWorldTime } = require("./timeSystem");
-const { getInventory, addItem, removeItem } = require("./inventorySystem");
-const { addItem: addItemToLocation, removeItem: removeItemFromLocation } = require("./locationSystem");
+const {
+  getInventory,
+  addItem,
+  removeItem
+} = require("./inventorySystem");
+const {
+  addItem: addItemToLocation,
+  removeItem: removeItemFromLocation
+} = require("./locationSystem");
 const { savePlayer } = require("./playerManager");
 const {
   addItem: addItemToContainer,
@@ -15,177 +22,174 @@ const {
   resolveContainer
 } = require("./entityResolver");
 const {
-  loadContainer,
   saveContainer
 } = require("./containerManager");
 
 function performAction(player, action) {
-    if (action.type === "look") {
-        const location = loadLocation(player.location);
+  if (action.type === "look") {
+    const location = loadLocation(player.location);
 
-        return {
-            success: true,
-            message: "You look around.",
-            data: {
-                location: location
-            }
-        };
+    return {
+      success: true,
+      message: "You look around.",
+      data: {
+        location
+      }
+    };
+  }
+
+  if (action.type === "move") {
+    const newLocation = movePlayer(player, action.exit);
+
+    if (!newLocation) {
+      return {
+        success: false,
+        message: "You cannot go that way.",
+        data: {}
+      };
     }
 
-    if (action.type === "move") {
-        const newLocation = movePlayer(player, action.exit);
+    return {
+      success: true,
+      message: `You move to ${newLocation.name}.`,
+      data: {
+        location: newLocation
+      }
+    };
+  }
 
-        if (!newLocation) {
-            return {
-                success: false,
-                message: "You cannot go that way.",
-                data: {}
-            };
-        }
-
-        return {
-            success: true,
-            message: `You move to ${newLocation.name}.`,
-            data: {
-                location: newLocation
-            }
-        };
-    }
-
-    if (action.type === "wait") {
+  if (action.type === "wait") {
     const world = loadWorld();
-
     const events = advanceWorldTime(world, action.minutes);
 
     saveWorld(world);
 
     return {
-        success: true,
-        message: `You wait for ${action.minutes} minutes.`,
-        data: {
-            world: world,
-            events: events
-        }
+      success: true,
+      message: `You wait for ${action.minutes} minutes.`,
+      data: {
+        world,
+        events
+      }
     };
+  }
+
+  if (action.type === "inventory") {
+    const inventory = getInventory(player);
+
+    return {
+      success: true,
+      message: "You check your inventory.",
+      data: {
+        inventory
+      }
+    };
+  }
+
+  if (action.type === "take") {
+    const item = resolveItem(action.itemInput);
+
+    if (!item) {
+      return {
+        success: false,
+        message: "I do not recognise that item.",
+        data: {}
+      };
     }
 
-    if (action.type === "inventory") {
-        const inventory = getInventory(player);
+    const location = loadLocation(player.location);
+    const removedItem = removeItemFromLocation(location, item.id);
 
-        return {
-            success: true,
-            message: "You check your inventory.",
-            data: {
-                inventory: inventory
-            }
-        };
+    if (!removedItem) {
+      return {
+        success: false,
+        message: "That item is not here.",
+        data: {}
+      };
     }
 
-    if (action.type === "take") {
-        const item = resolveItem(action.itemInput);
+    addItem(player, item.id);
 
-        if (!item) {
-            return {
-                success: false,
-                message: "I do not recognise that item.",
-                data: {}
-            };
-        }
+    saveLocation(location);
+    savePlayer(player);
 
-        const location = loadLocation(player.location);
+    return {
+      success: true,
+      message: `You take ${item.name}.`,
+      data: {
+        itemId: item.id
+      }
+    };
+  }
 
-        const removedItem = removeItemFromLocation(location, item.id);
+  if (action.type === "drop") {
+    const item = resolveItem(action.itemInput);
 
-        if (!removedItem) {
-            return {
-                success: false,
-                message: "That item is not here.",
-                data: {}
-            };
-        }
-
-        addItem(player, item.id);
-
-        saveLocation(location);
-        savePlayer(player);
-
-        return {
-            success: true,
-            message: `You take ${item.name}.`,
-            data: {
-                itemId: item.id
-            }
-        };
+    if (!item) {
+      return {
+        success: false,
+        message: "I do not recognise that item.",
+        data: {}
+      };
     }
 
-    if (action.type === "drop") {
-        const item = resolveItem(action.itemInput);
+    const location = loadLocation(player.location);
+    const removedItem = removeItem(player, item.id);
 
-        if (!item) {
-            return {
-                success: false,
-                message: "I do not recognise that item.",
-                data: {}
-            };
-        }
-
-        const location = loadLocation(player.location);
-
-        const removedItem = removeItem(player, item.id);
-
-        if (!removedItem) {
-            return {
-                success: false,
-                message: "You do not have that item.",
-                data: {}
-            };
-        }
-
-        addItemToLocation(location, item.id);
-
-        savePlayer(player);
-        saveLocation(location);
-
-        return {
-            success: true,
-            message: `You drop ${item.name}.`,
-            data: {
-                itemId: item.id
-            }
-        };
+    if (!removedItem) {
+      return {
+        success: false,
+        message: "You do not have that item.",
+        data: {}
+      };
     }
 
-    if (action.type === "talk") {
-        const npc = resolveNpc(action.npcInput);
+    addItemToLocation(location, item.id);
 
-        if (!npc) {
-            return {
-                success: false,
-                message: "I do not recognise that person.",
-                data: {}
-            };
-        }
+    savePlayer(player);
+    saveLocation(location);
 
-        const location = loadLocation(player.location);
+    return {
+      success: true,
+      message: `You drop ${item.name}.`,
+      data: {
+        itemId: item.id
+      }
+    };
+  }
 
-        if (!location.npcs.includes(npc.id)) {
-            return {
-                success: false,
-                message: "That person is not here.",
-                data: {}
-            };
-        }
+  if (action.type === "talk") {
+    const npc = resolveNpc(action.npcInput);
 
-        return {
-            success: true,
-            message: npc.dialogue,
-            data: {
-                npc: npc
-            }
-        };
+    if (!npc) {
+      return {
+        success: false,
+        message: "I do not recognise that person.",
+        data: {}
+      };
     }
 
-      if (action.type === "open") {
+    const location = loadLocation(player.location);
+    const npcIds = location.npcs || [];
+
+    if (!npcIds.includes(npc.id)) {
+      return {
+        success: false,
+        message: "That person is not here.",
+        data: {}
+      };
+    }
+
+    return {
+      success: true,
+      message: npc.dialogue,
+      data: {
+        npc
+      }
+    };
+  }
+
+  if (action.type === "open") {
     const container = resolveContainer(action.containerInput);
 
     if (!container) {
@@ -197,9 +201,9 @@ function performAction(player, action) {
     }
 
     const location = loadLocation(player.location);
-    const locationContainers = location.containers || [];
+    const locationObjects = location.objects || [];
 
-    if (!locationContainers.includes(container.id)) {
+    if (!locationObjects.includes(container.id)) {
       return {
         success: false,
         message: "That container is not here.",
@@ -227,9 +231,9 @@ function performAction(player, action) {
         container
       }
     };
-    }
+  }
 
-      if (action.type === "takeFromContainer") {
+  if (action.type === "takeFromContainer") {
     const item = resolveItem(action.itemInput);
 
     if (!item) {
@@ -251,9 +255,9 @@ function performAction(player, action) {
     }
 
     const location = loadLocation(player.location);
-    const locationContainers = location.containers || [];
+    const locationObjects = location.objects || [];
 
-    if (!locationContainers.includes(container.id)) {
+    if (!locationObjects.includes(container.id)) {
       return {
         success: false,
         message: "That container is not here.",
@@ -328,9 +332,9 @@ function performAction(player, action) {
     }
 
     const location = loadLocation(player.location);
-    const locationContainers = location.containers || [];
+    const locationObjects = location.objects || [];
 
-    if (!locationContainers.includes(container.id)) {
+    if (!locationObjects.includes(container.id)) {
       return {
         success: false,
         message: "That container is not here.",
@@ -383,13 +387,13 @@ function performAction(player, action) {
     };
   }
 
-    return {
-        success: false,
-        message: "Unknown action.",
-        data: {}
-    };
+  return {
+    success: false,
+    message: "Unknown action.",
+    data: {}
+  };
 }
 
 module.exports = {
-    performAction
+  performAction
 };

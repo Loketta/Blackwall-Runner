@@ -1,44 +1,61 @@
-const fs = require("fs");
-const path = require("path");
+const {
+  loadWorldObjects,
+  loadWorldObject,
+  saveWorldObject
+} = require("./worldObjectManager");
 
-const containersPath = path.join(
-  __dirname,
-  "../../data/containers/containers.json"
-);
+function toContainer(worldObject) {
+  if (!worldObject || worldObject.type !== "container") {
+    return undefined;
+  }
+
+  return {
+    id: worldObject.id,
+    type: worldObject.type,
+    name: worldObject.name,
+    description: worldObject.description,
+    locationId: worldObject.locationId,
+    items: worldObject.inventory || [],
+    isOpen: Boolean(worldObject.state?.isOpen),
+    isLocked: Boolean(worldObject.state?.isLocked)
+  };
+}
+
+function toWorldObject(container) {
+  return {
+    id: container.id,
+    type: "container",
+    name: container.name,
+    description: container.description,
+    locationId: container.locationId,
+    state: {
+      isOpen: Boolean(container.isOpen),
+      isLocked: Boolean(container.isLocked)
+    },
+    inventory: container.items || []
+  };
+}
 
 function loadContainers() {
-  const fileData = fs.readFileSync(containersPath, "utf8");
-  return JSON.parse(fileData);
+  return loadWorldObjects()
+    .filter(function (worldObject) {
+      return worldObject.type === "container";
+    })
+    .map(toContainer);
 }
 
 function saveContainers(containers) {
-  const fileData = JSON.stringify(containers, null, 2);
-  fs.writeFileSync(containersPath, fileData);
+  for (const container of containers) {
+    saveWorldObject(toWorldObject(container));
+  }
 }
 
 function loadContainer(containerId) {
-  const containers = loadContainers();
-
-  return containers.find(function (container) {
-    return container.id === containerId;
-  });
+  return toContainer(loadWorldObject(containerId));
 }
 
-function saveContainer(updatedContainer) {
-  const containers = loadContainers();
-
-  const containerIndex = containers.findIndex(function (container) {
-    return container.id === updatedContainer.id;
-  });
-
-  if (containerIndex === -1) {
-    return false;
-  }
-
-  containers[containerIndex] = updatedContainer;
-  saveContainers(containers);
-
-  return true;
+function saveContainer(container) {
+  return saveWorldObject(toWorldObject(container));
 }
 
 module.exports = {

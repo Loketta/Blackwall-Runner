@@ -1,7 +1,7 @@
 const { loadItem } = require("./itemManager");
 const { loadNpc } = require("./npcManager");
 const { loadShops } = require("./shopManager");
-const { loadContainer } = require("./containerManager");
+const { loadWorldObject } = require("./worldObjectManager");
 
 function describeLocation(location) {
   console.log(location.name);
@@ -21,11 +21,13 @@ function describeLocation(location) {
     }
   }
 
-  if (location.npcs.length > 0) {
+  const npcIds = location.npcs || [];
+
+  if (npcIds.length > 0) {
     console.log("");
     console.log("People:");
 
-    for (const npcId of location.npcs) {
+    for (const npcId of npcIds) {
       const npc = loadNpc(npcId);
 
       if (npc) {
@@ -36,11 +38,13 @@ function describeLocation(location) {
     }
   }
 
-  if (location.items.length > 0) {
+  const itemIds = location.items || [];
+
+  if (itemIds.length > 0) {
     console.log("");
     console.log("Items:");
 
-    for (const itemId of location.items) {
+    for (const itemId of itemIds) {
       const item = loadItem(itemId);
 
       if (item) {
@@ -51,28 +55,44 @@ function describeLocation(location) {
     }
   }
 
-  const containerIds = location.containers || [];
+  const objectIds = location.objects || [];
+  const worldObjects = objectIds
+    .map(loadWorldObject)
+    .filter(Boolean);
 
-  if (containerIds.length > 0) {
+  const containers = worldObjects.filter(function (worldObject) {
+    return worldObject.type === "container";
+  });
+
+  if (containers.length > 0) {
     console.log("");
     console.log("Containers:");
 
-    for (const containerId of containerIds) {
-      const container = loadContainer(containerId);
-
-      if (container) {
-        console.log(`- ${container.name}`);
-      } else {
-        console.log(`- Unknown Container (${containerId})`);
-      }
+    for (const container of containers) {
+      console.log(`- ${container.name}`);
     }
   }
 
-  if (location.exits.length > 0) {
+  const otherObjects = worldObjects.filter(function (worldObject) {
+    return worldObject.type !== "container";
+  });
+
+  if (otherObjects.length > 0) {
+    console.log("");
+    console.log("Objects:");
+
+    for (const worldObject of otherObjects) {
+      console.log(`- ${worldObject.name}`);
+    }
+  }
+
+  const exits = location.exits || [];
+
+  if (exits.length > 0) {
     console.log("");
     console.log("Exits:");
 
-    for (const exit of location.exits) {
+    for (const exit of exits) {
       console.log(`- ${exit.name}: ${exit.description}`);
     }
   }
