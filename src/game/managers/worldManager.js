@@ -1,19 +1,25 @@
-const fs = require("fs");
 const path = require("path");
+const {
+  createJsonFileRepository
+} = require("../repositories/jsonFileRepository");
 
-const worldPath = path.join(__dirname, "../../../data/World/world.json");
+const worldRepository = createJsonFileRepository({
+  filePath: path.join(
+    __dirname,
+    "../../../data/World/world.json"
+  ),
+  indentation: 2
+});
 
 function loadWorld() {
-    const worldData = fs.readFileSync(worldPath, "utf8");
-    return JSON.parse(worldData);
+  return worldRepository.load();
 }
 
 function saveWorld(world) {
-    const worldData = JSON.stringify(world, null, 2);
-    fs.writeFileSync(worldPath, worldData);
+  return worldRepository.save(world);
 }
 
 module.exports = {
-    loadWorld,
-    saveWorld
+  loadWorld,
+  saveWorld
 };
