@@ -1,4 +1,4 @@
-const { performAction } = require("../../game/actionDispatcher");
+const { performAction } = require("../../game/dispatcher/actionDispatcher");
 
 function runInventoryCommand(player) {
     const result = performAction(player, {

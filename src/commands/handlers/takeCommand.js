@@ -1,4 +1,4 @@
-const { performAction } = require("../../game/actionDispatcher");
+const { performAction } = require("../../game/dispatcher/actionDispatcher");
 
 function runTakeCommand(player, args) {
   const fromIndex = args.findIndex(function (arg) {

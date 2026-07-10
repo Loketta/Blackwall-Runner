@@ -1,5 +1,5 @@
 const { describeLocation } = require("../../game/presentation/locationDescriber");
-const { performAction } = require("../../game/actionDispatcher");
+const { performAction } = require("../../game/dispatcher/actionDispatcher");
 
 function runLookCommand(player) {
     const result = performAction(player, {

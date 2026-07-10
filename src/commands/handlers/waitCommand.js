@@ -1,4 +1,4 @@
-const { performAction } = require("../../game/actionDispatcher");
+const { performAction } = require("../../game/dispatcher/actionDispatcher");
 const { presentEvent } = require("../../game/presentation/eventPresenter");
 
 function runWaitCommand(player, args) {

@@ -1,4 +1,4 @@
-const { performAction } = require("../../game/actionDispatcher");
+const { performAction } = require("../../game/dispatcher/actionDispatcher");
 
 function runTalkCommand(player, args) {
     const npcInput = args.join(" ");

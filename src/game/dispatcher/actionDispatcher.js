@@ -1,29 +1,29 @@
-const { loadLocation, saveLocation } = require("./managers/locationManager");
-const { movePlayer } = require("./systems/movementManager");
-const { loadWorld, saveWorld } = require("./managers/worldManager");
-const { advanceWorldTime } = require("./time/timeSystem");
+const { loadLocation, saveLocation } = require("../managers/locationManager");
+const { movePlayer } = require("../systems/movementManager");
+const { loadWorld, saveWorld } = require("../managers/worldManager");
+const { advanceWorldTime } = require("../time/timeSystem");
 const {
   getInventory,
   addItem,
   removeItem
-} = require("./systems/inventorySystem");
+} = require("../systems/inventorySystem");
 const {
   addItem: addItemToLocation,
   removeItem: removeItemFromLocation
-} = require("./systems/locationSystem");
-const { savePlayer } = require("./managers/playerManager");
+} = require("../systems/locationSystem");
+const { savePlayer } = require("../managers/playerManager");
 const {
   addItem: addItemToContainer,
   removeItem: removeItemFromContainer
-} = require("./systems/containerSystem");
+} = require("../systems/containerSystem");
 const {
   resolveItem,
   resolveNpc,
   resolveContainer
-} = require("./resolution/entityResolver");
+} = require("../resolution/entityResolver");
 const {
   saveContainer
-} = require("./managers/containerManager");
+} = require("../managers/containerManager");
 
 function performAction(player, action) {
   if (action.type === "look") {

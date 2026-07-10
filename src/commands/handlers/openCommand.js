@@ -1,4 +1,4 @@
-const { performAction } = require("../../game/actionDispatcher");
+const { performAction } = require("../../game/dispatcher/actionDispatcher");
 const { loadItem } = require("../../game/managers/itemManager");
 
 function runOpenCommand(player, args) {
