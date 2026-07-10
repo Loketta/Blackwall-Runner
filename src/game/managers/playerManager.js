@@ -1,18 +1,25 @@
-const fs = require("fs");
+const path = require("path");
+const {
+  createJsonFileRepository
+} = require("../repositories/jsonFileRepository");
 
-const savePath = "data/players/runner.json";
+const playerRepository = createJsonFileRepository({
+  filePath: path.join(
+    __dirname,
+    "../../../data/players/runner.json"
+  ),
+  indentation: 4
+});
 
 function loadPlayer() {
-    const playerData = fs.readFileSync(savePath, "utf8");
-    return JSON.parse(playerData);
+  return playerRepository.load();
 }
 
 function savePlayer(player) {
-    const updatedPlayerData = JSON.stringify(player, null, 4);
-    fs.writeFileSync(savePath, updatedPlayerData);
+  return playerRepository.save(player);
 }
 
 module.exports = {
-    loadPlayer,
-    savePlayer
+  loadPlayer,
+  savePlayer
 };
