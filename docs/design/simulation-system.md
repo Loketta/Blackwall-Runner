@@ -189,6 +189,168 @@ When a sustained activity occurs:
 * incompatible activities may require separate elapsed periods;
 * world time advances by the shared fictional duration, not the sum of every command.
 
+## Player-Driven World Time
+
+Only activity on the shared player timeline advances world time.
+
+NPC decisions, schedules and autonomous actions never advance the world clock independently.
+
+An NPC beginning a thirty-five-minute journey does not immediately move time forward by thirty-five minutes. Instead, the engine records an ongoing journey whose progress is evaluated whenever player activity subsequently advances world time.
+
+Player-authorised time advancement includes:
+
+* travelling;
+* waiting;
+* sleeping;
+* sustained conversations;
+* investigation;
+* treatment;
+* repairs;
+* crafting;
+* combat duration;
+* other meaningful player activities;
+* explicit narrative time skips accepted by the players.
+
+Background simulation reacts to that elapsed time but does not create additional elapsed time.
+
+This prevents autonomous world activity from causing deadlines, schedules or environmental changes to advance while the players have not meaningfully acted.
+
+## Persistent NPC Activities
+
+NPC actions that require time must be represented as persistent activities rather than instant state changes.
+
+Possible activities include:
+
+* travelling;
+* working;
+* searching;
+* pursuing;
+* fleeing;
+* waiting;
+* sleeping;
+* recovering;
+* guarding;
+* performing a narrative task.
+
+An activity should record enough information for the engine to determine its state at any point on the world timeline.
+
+A travelling NPC may record:
+
+```json
+{
+  "type": "travelling",
+  "originId": "zone_a",
+  "destinationId": "zone_h",
+  "startedAtAbsoluteMinute": 5400,
+  "expectedCompletionMinute": 5435,
+  "route": [
+    {
+      "locationId": "zone_a",
+      "arrivalOffsetMinutes": 0
+    },
+    {
+      "locationId": "zone_b",
+      "arrivalOffsetMinutes": 5
+    },
+    {
+      "locationId": "zone_c",
+      "arrivalOffsetMinutes": 10
+    },
+    {
+      "locationId": "zone_d",
+      "arrivalOffsetMinutes": 15
+    }
+  ],
+  "reason": "Following a lead"
+}
+```
+
+The activity does not advance time. It is recalculated against the current world time whenever the player timeline advances.
+
+## Intermediate NPC Position
+
+NPC travel must preserve intermediate position.
+
+An NPC travelling through several locations must not disappear from the origin and appear instantly at the destination.
+
+If an NPC enters a new zone every five minutes, the scheduler must update their location as each threshold is crossed.
+
+This supports:
+
+* pursuit;
+* interception;
+* observation;
+* ambushes;
+* route changes;
+* travel interruptions;
+* encounters between moving actors;
+* players discovering where an NPC was recently seen.
+
+When the world advances across several route thresholds at once, the scheduler must process each meaningful transition in chronological order.
+
+## Narrative Authority and Mechanical Execution
+
+The AI GM owns NPC intention and narrative decisions.
+
+The AI may decide that an NPC:
+
+* leaves work early;
+* abandons a normal schedule;
+* follows the players;
+* flees from danger;
+* changes destination;
+* begins a pursuit;
+* stops to investigate something;
+* performs a story-critical action.
+
+The engine translates that intent into coherent persistent state.
+
+The engine owns:
+
+* route validation;
+* travel duration;
+* current position;
+* activity state;
+* schedule suspension;
+* mechanical requirements;
+* resulting events;
+* persistence.
+
+The engine must constrain outcomes without unnecessarily constraining narrative intent.
+
+NPC schedules are defaults describing what happens without interruption. Narrative directives may suspend, replace or permanently alter those schedules.
+
+## Scheduler Evaluation Rule
+
+Whenever player activity advances world time, the scheduler should:
+
+1. record the previous world time;
+2. advance to the new world time;
+3. identify NPC activities and scheduled events whose thresholds fall inside that interval;
+4. process them in chronological order;
+5. update intermediate locations and activity states;
+6. generate observable events where appropriate;
+7. persist the resulting world state.
+
+The scheduler must not advance world time while performing these updates.
+
+Time advancement and background progression are separate responsibilities:
+
+```text
+Player activity
+    ↓
+World time advances
+    ↓
+Scheduler evaluates elapsed interval
+    ↓
+NPC activities progress
+    ↓
+World events resolve
+    ↓
+Updated state is persisted
+```
+
+
 ## AI Responsibilities
 
 The AI may:
@@ -215,7 +377,7 @@ The engine must:
 * resolve mechanical requirements;
 * determine whether time meaningfully passes;
 * calculate elapsed duration from rules and context;
-* update world time;
+* advance world time only from the shared player timeline;
 * invoke scheduled systems;
 * process due events;
 * persist state;

@@ -1,7 +1,9 @@
 const { loadLocation, saveLocation } = require("../managers/locationManager");
 const { movePlayer } = require("../systems/movementSystem");
 const { loadWorld, saveWorld } = require("../managers/worldManager");
-const { advanceWorldTime } = require("../time/timeSystem");
+const {
+  advanceSimulation
+} = require("../simulation/simulationEngine");
 const {
   getInventory,
   addItem,
@@ -60,7 +62,10 @@ function performAction(player, action) {
 
   if (action.type === "wait") {
     const world = loadWorld();
-    const events = advanceWorldTime(world, action.minutes);
+    const simulationResult = advanceSimulation(
+      world,
+      action.minutes
+    );
 
     saveWorld(world);
 
@@ -69,7 +74,7 @@ function performAction(player, action) {
       message: `You wait for ${action.minutes} minutes.`,
       data: {
         world,
-        events
+        events: simulationResult.events
       }
     };
   }
