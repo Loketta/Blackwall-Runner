@@ -1,4 +1,5 @@
 const { loadPlayer } = require("../game/playerManager");
+
 const { runStatusCommand } = require("./handlers/statusCommand");
 const { runLookCommand } = require("./handlers/lookCommand");
 const { runMoveCommand } = require("./handlers/moveCommand");
@@ -8,72 +9,79 @@ const { runTakeCommand } = require("./handlers/takeCommand");
 const { runDropCommand } = require("./handlers/dropCommand");
 const { runTalkCommand } = require("./handlers/talkCommand");
 const { runShopCommand } = require("./handlers/shopCommand");
+const { runOpenCommand } = require("./handlers/openCommand");
 
 function showHelp() {
-    console.log("Unknown command.");
-    console.log("Available commands:");
-    console.log("status");
-    console.log("look");
-    console.log("move <exit>");
-    console.log("wait <minutes>");
-    console.log("inventory");
-    console.log("take <item>");
-    console.log("drop <item>");
-    console.log("talk <npc>");
-    console.log("shop");
+  console.log("Unknown command.");
+  console.log("Available commands:");
+  console.log("status");
+  console.log("look");
+  console.log("move <exit>");
+  console.log("wait <minutes>");
+  console.log("inventory");
+  console.log("take <item>");
+  console.log("drop <item>");
+  console.log("talk <person>");
+  console.log("shop");
+  console.log("open <container>");
 }
 
 function handleCommand(command, args) {
-    const player = loadPlayer();
+  const player = loadPlayer();
 
-    if (command === "status") {
-        runStatusCommand(player);
-        return;
-    }
+  if (command === "status") {
+    runStatusCommand(player);
+    return;
+  }
 
-    if (command === "look") {
-        runLookCommand(player);
-        return;
-    }
+  if (command === "look") {
+    runLookCommand(player);
+    return;
+  }
 
-    if (command === "move" || command === "go") {
-        runMoveCommand(player, args);
-        return;
-    }
+  if (command === "move" || command === "go") {
+    runMoveCommand(player, args);
+    return;
+  }
 
-    if (command === "wait") {
-        runWaitCommand(player, args);
-        return;
-    }
+  if (command === "wait") {
+    runWaitCommand(player, args);
+    return;
+  }
 
-    if (command === "inventory") {
-        runInventoryCommand(player);
-        return;
-    }
+  if (command === "inventory") {
+    runInventoryCommand(player);
+    return;
+  }
 
-    if (command === "take") {
-        runTakeCommand(player, args);
-        return;
-    }
+  if (command === "take") {
+    runTakeCommand(player, args);
+    return;
+  }
 
-    if (command === "drop") {
-        runDropCommand(player, args);
-        return;
-    }
+  if (command === "drop") {
+    runDropCommand(player, args);
+    return;
+  }
 
-    if (command === "talk") {
-        runTalkCommand(player, args);
-        return;
-    }
+  if (command === "talk") {
+    runTalkCommand(player, args);
+    return;
+  }
 
-    if (command === "shop") {
-        runShopCommand(player);
-        return;
-    }
+  if (command === "shop") {
+    runShopCommand(player);
+    return;
+  }
 
-    showHelp();
+  if (command === "open") {
+    runOpenCommand(player, args);
+    return;
+  }
+
+  showHelp();
 }
 
 module.exports = {
-    handleCommand
+  handleCommand
 };

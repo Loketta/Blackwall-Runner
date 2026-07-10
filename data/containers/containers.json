@@ -1,0 +1,13 @@
+[
+  {
+    "id": "alley_crate",
+    "name": "Alley Crate",
+    "description": "A dented polymer shipping crate with a warped lid.",
+    "locationId": "back_alley_1",
+    "items": [
+      "protein_bar"
+    ],
+    "isOpen": true,
+    "isLocked": false
+  }
+]

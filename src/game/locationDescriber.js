@@ -1,65 +1,83 @@
 const { loadItem } = require("./itemManager");
 const { loadNpc } = require("./npcManager");
 const { loadShops } = require("./shopManager");
+const { loadContainer } = require("./containerManager");
 
 function describeLocation(location) {
-    console.log(location.name);
-    console.log(location.description);
+  console.log(location.name);
+  console.log(location.description);
 
-    const shops = loadShops().filter(function(shop) {
-        return shop.locationId === location.id;
-    });
+  const shops = loadShops().filter(function (shop) {
+    return shop.locationId === location.id;
+  });
 
-    if (shops.length > 0) {
-        console.log("");
-        console.log("Shops:");
+  if (shops.length > 0) {
+    console.log("");
+    console.log("Shops:");
 
-        for (const shop of shops) {
-            const status = shop.isOpen ? "Open" : "Closed";
-            console.log(`- ${shop.name} (${status})`);
-        }
+    for (const shop of shops) {
+      const status = shop.isOpen ? "Open" : "Closed";
+      console.log(`- ${shop.name} (${status})`);
     }
+  }
 
-    if (location.npcs.length > 0) {
-        console.log("");
-        console.log("People:");
+  if (location.npcs.length > 0) {
+    console.log("");
+    console.log("People:");
 
-        for (const npcId of location.npcs) {
-            const npc = loadNpc(npcId);
+    for (const npcId of location.npcs) {
+      const npc = loadNpc(npcId);
 
-            if (npc) {
-                console.log(`- ${npc.name}`);
-            } else {
-                console.log(`- Unknown NPC (${npcId})`);
-            }
-        }
+      if (npc) {
+        console.log(`- ${npc.name}`);
+      } else {
+        console.log(`- Unknown NPC (${npcId})`);
+      }
     }
+  }
 
-    if (location.items.length > 0) {
-        console.log("");
-        console.log("Items:");
+  if (location.items.length > 0) {
+    console.log("");
+    console.log("Items:");
 
-        for (const itemId of location.items) {
-            const item = loadItem(itemId);
+    for (const itemId of location.items) {
+      const item = loadItem(itemId);
 
-            if (item) {
-                console.log(`- ${item.name}`);
-            } else {
-                console.log(`- Unknown Item (${itemId})`);
-            }
-        }
+      if (item) {
+        console.log(`- ${item.name}`);
+      } else {
+        console.log(`- Unknown Item (${itemId})`);
+      }
     }
+  }
 
-    if (location.exits.length > 0) {
-        console.log("");
-        console.log("Exits:");
+  const containerIds = location.containers || [];
 
-        for (const exit of location.exits) {
-            console.log(`- ${exit.name}: ${exit.description}`);
-        }
+  if (containerIds.length > 0) {
+    console.log("");
+    console.log("Containers:");
+
+    for (const containerId of containerIds) {
+      const container = loadContainer(containerId);
+
+      if (container) {
+        console.log(`- ${container.name}`);
+      } else {
+        console.log(`- Unknown Container (${containerId})`);
+      }
     }
+  }
+
+  if (location.exits.length > 0) {
+    console.log("");
+    console.log("Exits:");
+
+    for (const exit of location.exits) {
+      console.log(`- ${exit.name}: ${exit.description}`);
+    }
+  }
 }
 
 module.exports = {
-    describeLocation
+  describeLocation
 };

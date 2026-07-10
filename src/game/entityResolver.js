@@ -1,29 +1,49 @@
 const { loadItems } = require("./itemManager");
 const { loadNpcs } = require("./npcManager");
+const { loadContainers } = require("./containerManager");
+
+function normaliseInput(input) {
+  return input.trim().toLowerCase();
+}
 
 function resolveItem(input) {
-    const items = loadItems();
+  const items = loadItems();
+  const search = normaliseInput(input);
 
-    const search = input.toLowerCase();
-
-    return items.find(item =>
-        item.id.toLowerCase() === search ||
-        item.name.toLowerCase() === search
+  return items.find(function (item) {
+    return (
+      item.id.toLowerCase() === search ||
+      item.name.toLowerCase() === search
     );
+  });
 }
 
 function resolveNpc(input) {
-    const npcs = loadNpcs();
+  const npcs = loadNpcs();
+  const search = normaliseInput(input);
 
-    const search = input.toLowerCase();
-
-    return npcs.find(npc =>
-        npc.id.toLowerCase() === search ||
-        npc.name.toLowerCase() === search
+  return npcs.find(function (npc) {
+    return (
+      npc.id.toLowerCase() === search ||
+      npc.name.toLowerCase() === search
     );
+  });
+}
+
+function resolveContainer(input) {
+  const containers = loadContainers();
+  const search = normaliseInput(input);
+
+  return containers.find(function (container) {
+    return (
+      container.id.toLowerCase() === search ||
+      container.name.toLowerCase() === search
+    );
+  });
 }
 
 module.exports = {
-    resolveItem,
-    resolveNpc
+  resolveItem,
+  resolveNpc,
+  resolveContainer
 };

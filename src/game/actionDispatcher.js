@@ -5,7 +5,15 @@ const { advanceWorldTime } = require("./timeSystem");
 const { getInventory, addItem, removeItem } = require("./inventorySystem");
 const { addItem: addItemToLocation, removeItem: removeItemFromLocation } = require("./locationSystem");
 const { savePlayer } = require("./playerManager");
-const { resolveItem, resolveNpc } = require("./entityResolver");
+const {
+  resolveItem,
+  resolveNpc,
+  resolveContainer
+} = require("./entityResolver");
+const {
+  loadContainer,
+  saveContainer
+} = require("./containerManager");
 
 function performAction(player, action) {
     if (action.type === "look") {
@@ -171,6 +179,50 @@ function performAction(player, action) {
                 npc: npc
             }
         };
+    }
+
+      if (action.type === "open") {
+    const container = resolveContainer(action.containerInput);
+
+    if (!container) {
+      return {
+        success: false,
+        message: "I do not recognise that container.",
+        data: {}
+      };
+    }
+
+    const location = loadLocation(player.location);
+    const locationContainers = location.containers || [];
+
+    if (!locationContainers.includes(container.id)) {
+      return {
+        success: false,
+        message: "That container is not here.",
+        data: {}
+      };
+    }
+
+    if (container.isLocked) {
+      return {
+        success: false,
+        message: `${container.name} is locked.`,
+        data: {
+          containerId: container.id
+        }
+      };
+    }
+
+    container.isOpen = true;
+    saveContainer(container);
+
+    return {
+      success: true,
+      message: `You open ${container.name}.`,
+      data: {
+        container
+      }
+    };
     }
 
     return {
