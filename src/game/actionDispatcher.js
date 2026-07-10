@@ -6,6 +6,10 @@ const { getInventory, addItem, removeItem } = require("./inventorySystem");
 const { addItem: addItemToLocation, removeItem: removeItemFromLocation } = require("./locationSystem");
 const { savePlayer } = require("./playerManager");
 const {
+  addItem: addItemToContainer,
+  removeItem: removeItemFromContainer
+} = require("./containerSystem");
+const {
   resolveItem,
   resolveNpc,
   resolveContainer
@@ -224,6 +228,160 @@ function performAction(player, action) {
       }
     };
     }
+
+      if (action.type === "takeFromContainer") {
+    const item = resolveItem(action.itemInput);
+
+    if (!item) {
+      return {
+        success: false,
+        message: "I do not recognise that item.",
+        data: {}
+      };
+    }
+
+    const container = resolveContainer(action.containerInput);
+
+    if (!container) {
+      return {
+        success: false,
+        message: "I do not recognise that container.",
+        data: {}
+      };
+    }
+
+    const location = loadLocation(player.location);
+    const locationContainers = location.containers || [];
+
+    if (!locationContainers.includes(container.id)) {
+      return {
+        success: false,
+        message: "That container is not here.",
+        data: {}
+      };
+    }
+
+    if (container.isLocked) {
+      return {
+        success: false,
+        message: `${container.name} is locked.`,
+        data: {
+          containerId: container.id
+        }
+      };
+    }
+
+    if (!container.isOpen) {
+      return {
+        success: false,
+        message: `${container.name} is closed.`,
+        data: {
+          containerId: container.id
+        }
+      };
+    }
+
+    const removedItem = removeItemFromContainer(container, item.id);
+
+    if (!removedItem) {
+      return {
+        success: false,
+        message: `${item.name} is not inside ${container.name}.`,
+        data: {}
+      };
+    }
+
+    addItem(player, item.id);
+
+    saveContainer(container);
+    savePlayer(player);
+
+    return {
+      success: true,
+      message: `You take ${item.name} from ${container.name}.`,
+      data: {
+        itemId: item.id,
+        containerId: container.id
+      }
+    };
+  }
+
+  if (action.type === "dropIntoContainer") {
+    const item = resolveItem(action.itemInput);
+
+    if (!item) {
+      return {
+        success: false,
+        message: "I do not recognise that item.",
+        data: {}
+      };
+    }
+
+    const container = resolveContainer(action.containerInput);
+
+    if (!container) {
+      return {
+        success: false,
+        message: "I do not recognise that container.",
+        data: {}
+      };
+    }
+
+    const location = loadLocation(player.location);
+    const locationContainers = location.containers || [];
+
+    if (!locationContainers.includes(container.id)) {
+      return {
+        success: false,
+        message: "That container is not here.",
+        data: {}
+      };
+    }
+
+    if (container.isLocked) {
+      return {
+        success: false,
+        message: `${container.name} is locked.`,
+        data: {
+          containerId: container.id
+        }
+      };
+    }
+
+    if (!container.isOpen) {
+      return {
+        success: false,
+        message: `${container.name} is closed.`,
+        data: {
+          containerId: container.id
+        }
+      };
+    }
+
+    const removedItem = removeItem(player, item.id);
+
+    if (!removedItem) {
+      return {
+        success: false,
+        message: "You do not have that item.",
+        data: {}
+      };
+    }
+
+    addItemToContainer(container, item.id);
+
+    savePlayer(player);
+    saveContainer(container);
+
+    return {
+      success: true,
+      message: `You place ${item.name} inside ${container.name}.`,
+      data: {
+        itemId: item.id,
+        containerId: container.id
+      }
+    };
+  }
 
     return {
         success: false,

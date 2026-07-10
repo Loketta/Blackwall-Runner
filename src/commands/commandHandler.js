@@ -20,7 +20,9 @@ function showHelp() {
   console.log("wait <minutes>");
   console.log("inventory");
   console.log("take <item>");
+  console.log("take <item> from <container>");
   console.log("drop <item>");
+  console.log("drop <item> into <container>");
   console.log("talk <person>");
   console.log("shop");
   console.log("open <container>");
