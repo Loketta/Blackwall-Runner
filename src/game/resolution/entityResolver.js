@@ -1,6 +1,6 @@
-const { loadItems } = require("./managers/itemManager");
-const { loadNpcs } = require("./managers/npcManager");
-const { loadContainers } = require("./managers/containerManager");
+const { loadItems } = require("../managers/itemManager");
+const { loadNpcs } = require("../managers/npcManager");
+const { loadContainers } = require("../managers/containerManager");
 
 function normaliseInput(input) {
   return input.trim().toLowerCase();

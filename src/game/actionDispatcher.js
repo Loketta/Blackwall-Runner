@@ -20,7 +20,7 @@ const {
   resolveItem,
   resolveNpc,
   resolveContainer
-} = require("./entityResolver");
+} = require("./resolution/entityResolver");
 const {
   saveContainer
 } = require("./managers/containerManager");
