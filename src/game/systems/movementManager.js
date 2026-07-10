@@ -1,5 +1,5 @@
-const { loadLocation } = require("./managers/locationManager");
-const { savePlayer } = require("./managers/playerManager");
+const { loadLocation } = require("../managers/locationManager");
+const { savePlayer } = require("../managers/playerManager");
 
 function movePlayer(player, exitName) {
     const currentLocation = loadLocation(player.location);

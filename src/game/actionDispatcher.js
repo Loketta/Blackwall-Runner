@@ -1,21 +1,21 @@
 const { loadLocation, saveLocation } = require("./managers/locationManager");
-const { movePlayer } = require("./movementManager");
+const { movePlayer } = require("./systems/movementManager");
 const { loadWorld, saveWorld } = require("./managers/worldManager");
 const { advanceWorldTime } = require("./timeSystem");
 const {
   getInventory,
   addItem,
   removeItem
-} = require("./inventorySystem");
+} = require("./systems/inventorySystem");
 const {
   addItem: addItemToLocation,
   removeItem: removeItemFromLocation
-} = require("./locationSystem");
+} = require("./systems/locationSystem");
 const { savePlayer } = require("./managers/playerManager");
 const {
   addItem: addItemToContainer,
   removeItem: removeItemFromContainer
-} = require("./containerSystem");
+} = require("./systems/containerSystem");
 const {
   resolveItem,
   resolveNpc,

@@ -3,9 +3,9 @@
   "name": "Blackwall Runner",
   "city": "Neon Shallows",
   "day": 2,
-  "currentTime": "01:01",
+  "currentTime": "01:02",
   "weather": "heavy rain",
-  "weatherTimer": 3,
+  "weatherTimer": 4,
   "globalEvents": [],
   "eventFlags": {},
   "calendar": {
