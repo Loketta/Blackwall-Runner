@@ -53,5 +53,15 @@
     "name": "Status after time advancement",
     "args": ["status"],
     "expectedText": "PLAYER STATUS"
+  },
+  {
+    "name": "Move to safehouse",
+    "args": ["move", "safehouse"],
+    "expectedText": "You move to Safehouse 1."
+  },
+  {
+    "name": "Status after movement",
+    "args": ["status"],
+    "expectedText": "Location: safehouse_1"
   }
 ]
