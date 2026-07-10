@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "node tests/regression/runRegression.js",
-    "regression": "node tests/regression/runRegression.js"
-  },
+"scripts": {
+  "test": "npm run unit && npm run regression",
+  "unit": "node tests/unit/simulationEngine.test.js",
+  "regression": "node tests/regression/runRegression.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
