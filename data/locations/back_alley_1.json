@@ -13,9 +13,7 @@
   "npcs": [
     "finch"
   ],
-  "items": [
-    "protein_bar"
-  ],
+  "items": [],
   "objects": [
     "alley_crate"
   ]
