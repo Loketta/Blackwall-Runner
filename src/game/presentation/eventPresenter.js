@@ -1,4 +1,4 @@
-const { loadShop } = require("./managers/shopManager");
+const { loadShop } = require("../managers/shopManager");
 
 function presentShopOpened(event) {
     const shop = loadShop(event.data.shopId);

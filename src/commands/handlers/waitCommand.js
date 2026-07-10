@@ -1,5 +1,5 @@
 const { performAction } = require("../../game/actionDispatcher");
-const { presentEvent } = require("../../game/eventPresenter");
+const { presentEvent } = require("../../game/presentation/eventPresenter");
 
 function runWaitCommand(player, args) {
     const minutes = Number(args[0]);
