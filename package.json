@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/regression/runRegression.js",
+    "regression": "node tests/regression/runRegression.js"
   },
   "keywords": [],
   "author": "",

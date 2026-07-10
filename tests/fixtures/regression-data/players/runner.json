@@ -1,0 +1,12 @@
+{
+    "name": "Runner",
+    "role": "Solo",
+    "health": 40,
+    "credits": 0,
+    "location": "back_alley_1",
+    "inventory": [
+        "unity_pistol",
+        "protein_bar",
+        "protein_bar"
+    ]
+}
