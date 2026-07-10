@@ -1,4 +1,4 @@
-const { processWorldEvents } = require("./events/eventSystem");
+const { processWorldEvents } = require("../events/eventSystem");
 const { advanceCalendarDay } = require("./calendarSystem");
 
 function advanceWorldTime(world, minutes) {

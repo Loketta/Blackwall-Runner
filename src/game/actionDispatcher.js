@@ -1,7 +1,7 @@
 const { loadLocation, saveLocation } = require("./managers/locationManager");
 const { movePlayer } = require("./systems/movementManager");
 const { loadWorld, saveWorld } = require("./managers/worldManager");
-const { advanceWorldTime } = require("./timeSystem");
+const { advanceWorldTime } = require("./time/timeSystem");
 const {
   getInventory,
   addItem,
