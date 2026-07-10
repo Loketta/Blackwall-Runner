@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const npcsPath = path.join(__dirname, "../../data/npcs/npcs.json");
+const npcsPath = path.join(__dirname, "../../../data/npcs/npcs.json");
 
 function loadNpcs() {
     const npcData = fs.readFileSync(npcsPath, "utf8");

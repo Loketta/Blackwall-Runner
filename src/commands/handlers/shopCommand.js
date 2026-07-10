@@ -1,5 +1,5 @@
-const { loadShopsAtLocation } = require("../../game/shopManager");
-const { loadItem } = require("../../game/itemManager");
+const { loadShopsAtLocation } = require("../../game/managers/shopManager");
+const { loadItem } = require("../../game/managers/itemManager");
 
 function runShopCommand(player) {
     const shops = loadShopsAtLocation(player.location);

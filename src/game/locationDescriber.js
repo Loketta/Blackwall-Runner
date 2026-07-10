@@ -1,7 +1,7 @@
-const { loadItem } = require("./itemManager");
-const { loadNpc } = require("./npcManager");
-const { loadShops } = require("./shopManager");
-const { loadWorldObject } = require("./worldObjectManager");
+const { loadItem } = require("./managers/itemManager");
+const { loadNpc } = require("./managers/npcManager");
+const { loadShops } = require("./managers/shopManager");
+const { loadWorldObject } = require("./managers/worldObjectManager");
 
 function describeLocation(location) {
   console.log(location.name);

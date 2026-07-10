@@ -1,4 +1,4 @@
-const { loadWorld } = require("../../game/worldManager");
+const { loadWorld } = require("../../game/managers/worldManager");
 
 function runStatusCommand(player) {
     const world = loadWorld();

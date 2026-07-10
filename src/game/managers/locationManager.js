@@ -4,7 +4,7 @@ const path = require("path");
 function getLocationPath(locationId) {
     return path.join(
         __dirname,
-        "../../data/locations",
+        "../../../data/locations",
         `${locationId}.json`
     );
 }

@@ -1,4 +1,4 @@
-const { loadPlayer } = require("../game/playerManager");
+const { loadPlayer } = require("../game/managers/playerManager");
 
 const { runStatusCommand } = require("./handlers/statusCommand");
 const { runLookCommand } = require("./handlers/lookCommand");

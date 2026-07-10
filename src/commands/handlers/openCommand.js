@@ -1,5 +1,5 @@
 const { performAction } = require("../../game/actionDispatcher");
-const { loadItem } = require("../../game/itemManager");
+const { loadItem } = require("../../game/managers/itemManager");
 
 function runOpenCommand(player, args) {
   const containerInput = args.join(" ").trim();

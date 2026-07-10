@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const worldPath = path.join(__dirname, "../../data/World/world.json");
+const worldPath = path.join(__dirname, "../../../data/World/world.json");
 
 function loadWorld() {
     const worldData = fs.readFileSync(worldPath, "utf8");

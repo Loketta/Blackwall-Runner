@@ -1,4 +1,4 @@
-const { loadShops, saveShops } = require("../shopManager");
+const { loadShops, saveShops } = require("../managers/shopManager");
 
 function parseTimeToMinutes(time) {
     const [hours, minutes] = time.split(":").map(Number);

@@ -1,4 +1,4 @@
-const { loadItem } = require("./itemManager");
+const { loadItem } = require("./managers/itemManager");
 
 function addItem(player, itemId) {
     player.inventory.push(itemId);

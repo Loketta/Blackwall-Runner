@@ -3,7 +3,7 @@ const path = require("path");
 
 const worldObjectsPath = path.join(
   __dirname,
-  "../../data/worldObjects/worldObjects.json"
+  "../../../data/worldObjects/worldObjects.json"
 );
 
 function loadWorldObjects() {

@@ -1,6 +1,6 @@
-const { loadLocation, saveLocation } = require("./locationManager");
+const { loadLocation, saveLocation } = require("./managers/locationManager");
 const { movePlayer } = require("./movementManager");
-const { loadWorld, saveWorld } = require("./worldManager");
+const { loadWorld, saveWorld } = require("./managers/worldManager");
 const { advanceWorldTime } = require("./timeSystem");
 const {
   getInventory,
@@ -11,7 +11,7 @@ const {
   addItem: addItemToLocation,
   removeItem: removeItemFromLocation
 } = require("./locationSystem");
-const { savePlayer } = require("./playerManager");
+const { savePlayer } = require("./managers/playerManager");
 const {
   addItem: addItemToContainer,
   removeItem: removeItemFromContainer
@@ -23,7 +23,7 @@ const {
 } = require("./entityResolver");
 const {
   saveContainer
-} = require("./containerManager");
+} = require("./managers/containerManager");
 
 function performAction(player, action) {
   if (action.type === "look") {
