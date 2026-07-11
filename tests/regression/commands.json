@@ -45,6 +45,11 @@
     "expectedText": "Protein Bar"
   },
   {
+    "name": "Take dropped item",
+    "args": ["take", "Protein Bar"],
+    "expectedText": "You take Protein Bar."
+  },
+  {
     "name": "Advance world time",
     "args": ["wait", "1"],
     "expectedText": "Time:"
