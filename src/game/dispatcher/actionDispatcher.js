@@ -7,6 +7,7 @@ const { performInventoryAction } = require("../actions/inventoryAction");
 const { performMoveAction } = require("../actions/moveAction");
 const { performTalkAction } = require("../actions/talkAction");
 const { performOpenContainerAction } = require("../actions/openContainerAction");
+const { performTakeFromContainerAction } = require("../actions/takeFromContainerAction");
 const { addItem, removeItem } = require("../systems/inventorySystem");
 const {
   addItem: addItemToLocation,
@@ -120,80 +121,7 @@ function performAction(player, action) {
   }
 
   if (action.type === "takeFromContainer") {
-    const item = resolveItem(action.itemInput);
-
-    if (!item) {
-      return {
-        success: false,
-        message: "I do not recognise that item.",
-        data: {}
-      };
-    }
-
-    const container = resolveContainer(action.containerInput);
-
-    if (!container) {
-      return {
-        success: false,
-        message: "I do not recognise that container.",
-        data: {}
-      };
-    }
-
-    const location = loadLocation(player.location);
-    const locationObjects = location.objects || [];
-
-    if (!locationObjects.includes(container.id)) {
-      return {
-        success: false,
-        message: "That container is not here.",
-        data: {}
-      };
-    }
-
-    if (container.isLocked) {
-      return {
-        success: false,
-        message: `${container.name} is locked.`,
-        data: {
-          containerId: container.id
-        }
-      };
-    }
-
-    if (!container.isOpen) {
-      return {
-        success: false,
-        message: `${container.name} is closed.`,
-        data: {
-          containerId: container.id
-        }
-      };
-    }
-
-    const removedItem = removeItemFromContainer(container, item.id);
-
-    if (!removedItem) {
-      return {
-        success: false,
-        message: `${item.name} is not inside ${container.name}.`,
-        data: {}
-      };
-    }
-
-    addItem(player, item.id);
-
-    saveContainer(container);
-    savePlayer(player);
-
-    return {
-      success: true,
-      message: `You take ${item.name} from ${container.name}.`,
-      data: {
-        itemId: item.id,
-        containerId: container.id
-      }
-    };
+    return performTakeFromContainerAction(player, action);
   }
 
   if (action.type === "dropIntoContainer") {
