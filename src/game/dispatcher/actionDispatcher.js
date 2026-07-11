@@ -8,11 +8,9 @@ const { performMoveAction } = require("../actions/moveAction");
 const { performTalkAction } = require("../actions/talkAction");
 const { performOpenContainerAction } = require("../actions/openContainerAction");
 const { performTakeFromContainerAction } = require("../actions/takeFromContainerAction");
+const { performDropAction } = require("../actions/dropAction");
 const { addItem, removeItem } = require("../systems/inventorySystem");
-const {
-  addItem: addItemToLocation,
-  removeItem: removeItemFromLocation
-} = require("../systems/locationSystem");
+const { removeItem: removeItemFromLocation } = require("../systems/locationSystem");
 const { savePlayer } = require("../managers/playerManager");
 const {
   addItem: addItemToContainer,
@@ -77,39 +75,7 @@ function performAction(player, action) {
   }
 
   if (action.type === "drop") {
-    const item = resolveItem(action.itemInput);
-
-    if (!item) {
-      return {
-        success: false,
-        message: "I do not recognise that item.",
-        data: {}
-      };
-    }
-
-    const location = loadLocation(player.location);
-    const removedItem = removeItem(player, item.id);
-
-    if (!removedItem) {
-      return {
-        success: false,
-        message: "You do not have that item.",
-        data: {}
-      };
-    }
-
-    addItemToLocation(location, item.id);
-
-    savePlayer(player);
-    saveLocation(location);
-
-    return {
-      success: true,
-      message: `You drop ${item.name}.`,
-      data: {
-        itemId: item.id
-      }
-    };
+    return performDropAction(player, action);
   }
 
   if (action.type === "talk") {
