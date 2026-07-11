@@ -99,6 +99,63 @@ test("Does not freeze result data", () => {
   );
 });
 
+test("Creates a successful result", () => {
+  const data = {
+    locationId: "back_alley_1"
+  };
+
+  const result = ActionResult.success(
+    "You look around.",
+    data
+  );
+
+  assert.ok(result instanceof ActionResult);
+  assert.strictEqual(result.success, true);
+  assert.strictEqual(result.message, "You look around.");
+  assert.strictEqual(result.data, data);
+});
+
+test("Creates a successful result with elapsed minutes", () => {
+  const result = ActionResult.success(
+    "You wait.",
+    {},
+    {
+      elapsedMinutes: 15
+    }
+  );
+
+  assert.strictEqual(result.success, true);
+  assert.strictEqual(result.elapsedMinutes, 15);
+});
+
+test("Creates a failed result", () => {
+  const result = ActionResult.failure(
+    "That item is not here."
+  );
+
+  assert.ok(result instanceof ActionResult);
+  assert.strictEqual(result.success, false);
+  assert.strictEqual(
+    result.message,
+    "That item is not here."
+  );
+  assert.deepStrictEqual(result.data, {});
+});
+
+test("Creates a failed result with data", () => {
+  const data = {
+    itemId: "item_1"
+  };
+
+  const result = ActionResult.failure(
+    "That item is unavailable.",
+    data
+  );
+
+  assert.strictEqual(result.success, false);
+  assert.strictEqual(result.data, data);
+});
+
 console.log("");
 console.log("================================");
 console.log(`${passed} passed`);

@@ -15,6 +15,30 @@ class ActionResult {
 
     Object.freeze(this);
   }
+
+  static success(
+    message,
+    data = {},
+    options = {}
+  ) {
+    return new ActionResult({
+      success: true,
+      message,
+      data,
+      elapsedMinutes: options.elapsedMinutes
+    });
+  }
+
+  static failure(
+    message,
+    data = {}
+  ) {
+    return new ActionResult({
+      success: false,
+      message,
+      data
+    });
+  }
 }
 
 module.exports = {
