@@ -4,11 +4,8 @@ const {
   performWaitAction
 } = require("../actions/waitAction");
 const { performLookAction } = require("../actions/lookAction");
-const {
-  getInventory,
-  addItem,
-  removeItem
-} = require("../systems/inventorySystem");
+const { performInventoryAction } = require("../actions/inventoryAction");
+const { addItem, removeItem } = require("../systems/inventorySystem");
 const {
   addItem: addItemToLocation,
   removeItem: removeItemFromLocation
@@ -57,16 +54,8 @@ function performAction(player, action) {
   }
 
   if (action.type === "inventory") {
-    const inventory = getInventory(player);
-
-    return {
-      success: true,
-      message: "You check your inventory.",
-      data: {
-        inventory
-      }
-    };
-  }
+  return performInventoryAction(player);
+}
 
   if (action.type === "take") {
     const item = resolveItem(action.itemInput);
