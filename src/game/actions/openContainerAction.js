@@ -7,6 +7,9 @@ const {
 const {
   saveContainer
 } = require("../managers/containerManager");
+const {
+  ActionResult
+} = require("../results/actionResult");
 
 function performOpenContainerAction(context) {
   const container = resolveContainer(
@@ -14,44 +17,38 @@ function performOpenContainerAction(context) {
   );
 
   if (!container) {
-    return {
-      success: false,
-      message: "I do not recognise that container.",
-      data: {}
-    };
+    return ActionResult.failure(
+      "I do not recognise that container."
+    );
   }
 
   const location = loadLocation(context.player.location);
   const locationObjects = location.objects || [];
 
   if (!locationObjects.includes(container.id)) {
-    return {
-      success: false,
-      message: "That container is not here.",
-      data: {}
-    };
+    return ActionResult.failure(
+      "That container is not here."
+    );
   }
 
   if (container.isLocked) {
-    return {
-      success: false,
-      message: `${container.name} is locked.`,
-      data: {
+    return ActionResult.failure(
+      `${container.name} is locked.`,
+      {
         containerId: container.id
       }
-    };
+    );
   }
 
   container.isOpen = true;
   saveContainer(container);
 
-  return {
-    success: true,
-    message: `You open ${container.name}.`,
-    data: {
+  return ActionResult.success(
+    `You open ${container.name}.`,
+    {
       container
     }
-  };
+  );
 }
 
 module.exports = {
