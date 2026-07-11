@@ -6,6 +6,7 @@ const { performLookAction } = require("../actions/lookAction");
 const { performInventoryAction } = require("../actions/inventoryAction");
 const { performMoveAction } = require("../actions/moveAction");
 const { performTalkAction } = require("../actions/talkAction");
+const { performOpenContainerAction } = require("../actions/openContainerAction");
 const { addItem, removeItem } = require("../systems/inventorySystem");
 const {
   addItem: addItemToLocation,
@@ -115,47 +116,7 @@ function performAction(player, action) {
   }
 
   if (action.type === "open") {
-    const container = resolveContainer(action.containerInput);
-
-    if (!container) {
-      return {
-        success: false,
-        message: "I do not recognise that container.",
-        data: {}
-      };
-    }
-
-    const location = loadLocation(player.location);
-    const locationObjects = location.objects || [];
-
-    if (!locationObjects.includes(container.id)) {
-      return {
-        success: false,
-        message: "That container is not here.",
-        data: {}
-      };
-    }
-
-    if (container.isLocked) {
-      return {
-        success: false,
-        message: `${container.name} is locked.`,
-        data: {
-          containerId: container.id
-        }
-      };
-    }
-
-    container.isOpen = true;
-    saveContainer(container);
-
-    return {
-      success: true,
-      message: `You open ${container.name}.`,
-      data: {
-        container
-      }
-    };
+    return performOpenContainerAction(player, action);
   }
 
   if (action.type === "takeFromContainer") {
