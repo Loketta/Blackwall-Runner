@@ -3,6 +3,7 @@ const { movePlayer } = require("../systems/movementSystem");
 const {
   performWaitAction
 } = require("../actions/waitAction");
+const { performLookAction } = require("../actions/lookAction");
 const {
   getInventory,
   addItem,
@@ -28,15 +29,7 @@ const {
 
 function performAction(player, action) {
   if (action.type === "look") {
-    const location = loadLocation(player.location);
-
-    return {
-      success: true,
-      message: "You look around.",
-      data: {
-        location
-      }
-    };
+    return performLookAction(player);
   }
 
   if (action.type === "move") {
