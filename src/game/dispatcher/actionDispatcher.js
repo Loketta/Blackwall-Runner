@@ -1,10 +1,10 @@
 const { loadLocation, saveLocation } = require("../managers/locationManager");
-const { movePlayer } = require("../systems/movementSystem");
 const {
   performWaitAction
 } = require("../actions/waitAction");
 const { performLookAction } = require("../actions/lookAction");
 const { performInventoryAction } = require("../actions/inventoryAction");
+const { performMoveAction } = require("../actions/moveAction");
 const { addItem, removeItem } = require("../systems/inventorySystem");
 const {
   addItem: addItemToLocation,
@@ -30,23 +30,7 @@ function performAction(player, action) {
   }
 
   if (action.type === "move") {
-    const newLocation = movePlayer(player, action.exit);
-
-    if (!newLocation) {
-      return {
-        success: false,
-        message: "You cannot go that way.",
-        data: {}
-      };
-    }
-
-    return {
-      success: true,
-      message: `You move to ${newLocation.name}.`,
-      data: {
-        location: newLocation
-      }
-    };
+    return performMoveAction(player, action);
   }
 
   if (action.type === "wait") {
