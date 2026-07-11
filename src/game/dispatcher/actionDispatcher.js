@@ -2,10 +2,6 @@ const {
   ActionContext
 } = require("../context/actionContext");
 const {
-  loadLocation,
-  saveLocation
-} = require("../managers/locationManager");
-const {
   performWaitAction
 } = require("../actions/waitAction");
 const {
@@ -17,6 +13,9 @@ const {
 const {
   performMoveAction
 } = require("../actions/moveAction");
+const {
+  performTakeAction
+} = require("../actions/takeAction");
 const {
   performTalkAction
 } = require("../actions/talkAction");
@@ -32,18 +31,6 @@ const {
 const {
   performDropIntoContainerAction
 } = require("../actions/dropIntoContainerAction");
-const {
-  addItem
-} = require("../systems/inventorySystem");
-const {
-  removeItem: removeItemFromLocation
-} = require("../systems/locationSystem");
-const {
-  savePlayer
-} = require("../managers/playerManager");
-const {
-  resolveItem
-} = require("../resolution/entityResolver");
 
 function performAction(player, action) {
   const context = new ActionContext({
@@ -68,38 +55,7 @@ function performAction(player, action) {
   }
 
   if (action.type === "take") {
-    const item = resolveItem(context.action.itemInput);
-
-    if (!item) {
-      return {
-        success: false,
-        message: "I do not recognise that item.",
-        data: {}
-      };
-    }
-
-    const location = loadLocation(context.player.location);
-    const removedItem = removeItemFromLocation(location, item.id);
-
-    if (!removedItem) {
-      return {
-        success: false,
-        message: "That item is not here.",
-        data: {}
-      };
-    }
-
-    addItem(context.player, item.id);
-    saveLocation(location);
-    savePlayer(context.player);
-
-    return {
-      success: true,
-      message: `You take ${item.name}.`,
-      data: {
-        itemId: item.id
-      }
-    };
+    return performTakeAction(context);
   }
 
   if (action.type === "drop") {
