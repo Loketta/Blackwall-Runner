@@ -5,6 +5,7 @@ const {
 const { performLookAction } = require("../actions/lookAction");
 const { performInventoryAction } = require("../actions/inventoryAction");
 const { performMoveAction } = require("../actions/moveAction");
+const { performTalkAction } = require("../actions/talkAction");
 const { addItem, removeItem } = require("../systems/inventorySystem");
 const {
   addItem: addItemToLocation,
@@ -15,11 +16,7 @@ const {
   addItem: addItemToContainer,
   removeItem: removeItemFromContainer
 } = require("../systems/containerSystem");
-const {
-  resolveItem,
-  resolveNpc,
-  resolveContainer
-} = require("../resolution/entityResolver");
+const { resolveItem, resolveContainer } = require("../resolution/entityResolver");
 const {
   saveContainer
 } = require("../managers/containerManager");
@@ -114,34 +111,7 @@ function performAction(player, action) {
   }
 
   if (action.type === "talk") {
-    const npc = resolveNpc(action.npcInput);
-
-    if (!npc) {
-      return {
-        success: false,
-        message: "I do not recognise that person.",
-        data: {}
-      };
-    }
-
-    const location = loadLocation(player.location);
-    const npcIds = location.npcs || [];
-
-    if (!npcIds.includes(npc.id)) {
-      return {
-        success: false,
-        message: "That person is not here.",
-        data: {}
-      };
-    }
-
-    return {
-      success: true,
-      message: npc.dialogue,
-      data: {
-        npc
-      }
-    };
+    return performTalkAction(player, action);
   }
 
   if (action.type === "open") {
