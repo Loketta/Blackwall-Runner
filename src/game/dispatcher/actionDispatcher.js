@@ -2,6 +2,9 @@ const {
   ActionContext
 } = require("../context/actionContext");
 const {
+  ActionResult
+} = require("../results/actionResult");
+const {
   performWaitAction
 } = require("../actions/waitAction");
 const {
@@ -78,11 +81,7 @@ function performAction(player, action) {
     return performDropIntoContainerAction(context);
   }
 
-  return {
-    success: false,
-    message: "Unknown action.",
-    data: {}
-  };
+  return ActionResult.failure("Unknown action.");
 }
 
 module.exports = {

@@ -1,10 +1,6 @@
-const {
-  loadWorld,
-  saveWorld
-} = require("../managers/worldManager");
-const {
-  advanceSimulation
-} = require("../simulation/simulationEngine");
+const { loadWorld, saveWorld } = require("../managers/worldManager");
+const { advanceSimulation } = require("../simulation/simulationEngine");
+const { ActionResult } = require("../results/actionResult");
 
 function performWaitAction(context) {
   const world = loadWorld();
@@ -16,17 +12,16 @@ function performWaitAction(context) {
 
   saveWorld(world);
 
-  return {
-    success: true,
-    message: `You wait for ${context.action.minutes} minutes.`,
-    elapsedMinutes: simulationResult.elapsedMinutes,
-    data: {
+  return ActionResult.success(
+    `You wait for ${context.action.minutes} minutes.`,
+    {
       world,
       events: simulationResult.events
+    },
+    {
+      elapsedMinutes: simulationResult.elapsedMinutes
     }
-  };
+  );
 }
 
-module.exports = {
-  performWaitAction
-};
+module.exports = { performWaitAction };
