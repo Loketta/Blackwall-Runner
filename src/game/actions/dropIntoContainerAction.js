@@ -1,15 +1,25 @@
-const { loadLocation } = require("../managers/locationManager");
-const { savePlayer } = require("../managers/playerManager");
-const { saveContainer } = require("../managers/containerManager");
-const { removeItem } = require("../systems/inventorySystem");
-const { addItem: addItemToContainer } = require("../systems/containerSystem");
+const {
+  loadLocation
+} = require("../managers/locationManager");
+const {
+  savePlayer
+} = require("../managers/playerManager");
+const {
+  saveContainer
+} = require("../managers/containerManager");
+const {
+  removeItem
+} = require("../systems/inventorySystem");
+const {
+  addItem: addItemToContainer
+} = require("../systems/containerSystem");
 const {
   resolveItem,
   resolveContainer
 } = require("../resolution/entityResolver");
 
-function performDropIntoContainerAction(player, action) {
-  const item = resolveItem(action.itemInput);
+function performDropIntoContainerAction(context) {
+  const item = resolveItem(context.action.itemInput);
 
   if (!item) {
     return {
@@ -19,7 +29,9 @@ function performDropIntoContainerAction(player, action) {
     };
   }
 
-  const container = resolveContainer(action.containerInput);
+  const container = resolveContainer(
+    context.action.containerInput
+  );
 
   if (!container) {
     return {
@@ -29,7 +41,7 @@ function performDropIntoContainerAction(player, action) {
     };
   }
 
-  const location = loadLocation(player.location);
+  const location = loadLocation(context.player.location);
   const locationObjects = location.objects || [];
 
   if (!locationObjects.includes(container.id)) {
@@ -60,7 +72,10 @@ function performDropIntoContainerAction(player, action) {
     };
   }
 
-  const removedItem = removeItem(player, item.id);
+  const removedItem = removeItem(
+    context.player,
+    item.id
+  );
 
   if (!removedItem) {
     return {
@@ -71,7 +86,7 @@ function performDropIntoContainerAction(player, action) {
   }
 
   addItemToContainer(container, item.id);
-  savePlayer(player);
+  savePlayer(context.player);
   saveContainer(container);
 
   return {

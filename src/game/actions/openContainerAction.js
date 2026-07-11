@@ -1,9 +1,17 @@
-const { loadLocation } = require("../managers/locationManager");
-const { resolveContainer } = require("../resolution/entityResolver");
-const { saveContainer } = require("../managers/containerManager");
+const {
+  loadLocation
+} = require("../managers/locationManager");
+const {
+  resolveContainer
+} = require("../resolution/entityResolver");
+const {
+  saveContainer
+} = require("../managers/containerManager");
 
-function performOpenContainerAction(player, action) {
-  const container = resolveContainer(action.containerInput);
+function performOpenContainerAction(context) {
+  const container = resolveContainer(
+    context.action.containerInput
+  );
 
   if (!container) {
     return {
@@ -13,7 +21,7 @@ function performOpenContainerAction(player, action) {
     };
   }
 
-  const location = loadLocation(player.location);
+  const location = loadLocation(context.player.location);
   const locationObjects = location.objects || [];
 
   if (!locationObjects.includes(container.id)) {

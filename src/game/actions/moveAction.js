@@ -1,7 +1,12 @@
-const { movePlayer } = require("../systems/movementSystem");
+const {
+  movePlayer
+} = require("../systems/movementSystem");
 
-function performMoveAction(player, action) {
-  const newLocation = movePlayer(player, action.exit);
+function performMoveAction(context) {
+  const newLocation = movePlayer(
+    context.player,
+    context.action.exit
+  );
 
   if (!newLocation) {
     return {

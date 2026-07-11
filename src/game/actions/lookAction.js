@@ -1,7 +1,9 @@
-const { loadLocation } = require("../managers/locationManager");
+const {
+  loadLocation
+} = require("../managers/locationManager");
 
-function performLookAction(player) {
-  const location = loadLocation(player.location);
+function performLookAction(context) {
+  const location = loadLocation(context.player.location);
 
   return {
     success: true,

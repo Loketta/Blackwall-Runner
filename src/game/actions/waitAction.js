@@ -6,18 +6,19 @@ const {
   advanceSimulation
 } = require("../simulation/simulationEngine");
 
-function performWaitAction(action) {
+function performWaitAction(context) {
   const world = loadWorld();
+
   const simulationResult = advanceSimulation(
     world,
-    action.minutes
+    context.action.minutes
   );
 
   saveWorld(world);
 
   return {
     success: true,
-    message: `You wait for ${action.minutes} minutes.`,
+    message: `You wait for ${context.action.minutes} minutes.`,
     elapsedMinutes: simulationResult.elapsedMinutes,
     data: {
       world,

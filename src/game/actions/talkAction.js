@@ -1,8 +1,12 @@
-const { loadLocation } = require("../managers/locationManager");
-const { resolveNpc } = require("../resolution/entityResolver");
+const {
+  loadLocation
+} = require("../managers/locationManager");
+const {
+  resolveNpc
+} = require("../resolution/entityResolver");
 
-function performTalkAction(player, action) {
-  const npc = resolveNpc(action.npcInput);
+function performTalkAction(context) {
+  const npc = resolveNpc(context.action.npcInput);
 
   if (!npc) {
     return {
@@ -12,7 +16,7 @@ function performTalkAction(player, action) {
     };
   }
 
-  const location = loadLocation(player.location);
+  const location = loadLocation(context.player.location);
   const npcIds = location.npcs || [];
 
   if (!npcIds.includes(npc.id)) {

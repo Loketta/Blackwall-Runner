@@ -1,39 +1,74 @@
-const { loadLocation, saveLocation } = require("../managers/locationManager");
+const {
+  ActionContext
+} = require("../context/actionContext");
+const {
+  loadLocation,
+  saveLocation
+} = require("../managers/locationManager");
 const {
   performWaitAction
 } = require("../actions/waitAction");
-const { performLookAction } = require("../actions/lookAction");
-const { performInventoryAction } = require("../actions/inventoryAction");
-const { performMoveAction } = require("../actions/moveAction");
-const { performTalkAction } = require("../actions/talkAction");
-const { performOpenContainerAction } = require("../actions/openContainerAction");
-const { performTakeFromContainerAction } = require("../actions/takeFromContainerAction");
-const { performDropAction } = require("../actions/dropAction");
-const { performDropIntoContainerAction } = require("../actions/dropIntoContainerAction");
-const { addItem } = require("../systems/inventorySystem");
-const { removeItem: removeItemFromLocation } = require("../systems/locationSystem");
-const { savePlayer } = require("../managers/playerManager");
-const { resolveItem } = require("../resolution/entityResolver");
+const {
+  performLookAction
+} = require("../actions/lookAction");
+const {
+  performInventoryAction
+} = require("../actions/inventoryAction");
+const {
+  performMoveAction
+} = require("../actions/moveAction");
+const {
+  performTalkAction
+} = require("../actions/talkAction");
+const {
+  performOpenContainerAction
+} = require("../actions/openContainerAction");
+const {
+  performTakeFromContainerAction
+} = require("../actions/takeFromContainerAction");
+const {
+  performDropAction
+} = require("../actions/dropAction");
+const {
+  performDropIntoContainerAction
+} = require("../actions/dropIntoContainerAction");
+const {
+  addItem
+} = require("../systems/inventorySystem");
+const {
+  removeItem: removeItemFromLocation
+} = require("../systems/locationSystem");
+const {
+  savePlayer
+} = require("../managers/playerManager");
+const {
+  resolveItem
+} = require("../resolution/entityResolver");
 
 function performAction(player, action) {
+  const context = new ActionContext({
+    player,
+    action
+  });
+
   if (action.type === "look") {
-    return performLookAction(player);
+    return performLookAction(context);
   }
 
   if (action.type === "move") {
-    return performMoveAction(player, action);
+    return performMoveAction(context);
   }
 
   if (action.type === "wait") {
-    return performWaitAction(action);
+    return performWaitAction(context);
   }
 
   if (action.type === "inventory") {
-  return performInventoryAction(player);
-}
+    return performInventoryAction(context);
+  }
 
   if (action.type === "take") {
-    const item = resolveItem(action.itemInput);
+    const item = resolveItem(context.action.itemInput);
 
     if (!item) {
       return {
@@ -43,7 +78,7 @@ function performAction(player, action) {
       };
     }
 
-    const location = loadLocation(player.location);
+    const location = loadLocation(context.player.location);
     const removedItem = removeItemFromLocation(location, item.id);
 
     if (!removedItem) {
@@ -54,10 +89,9 @@ function performAction(player, action) {
       };
     }
 
-    addItem(player, item.id);
-
+    addItem(context.player, item.id);
     saveLocation(location);
-    savePlayer(player);
+    savePlayer(context.player);
 
     return {
       success: true,
@@ -69,23 +103,23 @@ function performAction(player, action) {
   }
 
   if (action.type === "drop") {
-    return performDropAction(player, action);
+    return performDropAction(context);
   }
 
   if (action.type === "talk") {
-    return performTalkAction(player, action);
+    return performTalkAction(context);
   }
 
   if (action.type === "open") {
-    return performOpenContainerAction(player, action);
+    return performOpenContainerAction(context);
   }
 
   if (action.type === "takeFromContainer") {
-    return performTakeFromContainerAction(player, action);
+    return performTakeFromContainerAction(context);
   }
 
   if (action.type === "dropIntoContainer") {
-    return performDropIntoContainerAction(player, action);
+    return performDropIntoContainerAction(context);
   }
 
   return {

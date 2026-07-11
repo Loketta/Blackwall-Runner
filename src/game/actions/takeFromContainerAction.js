@@ -1,7 +1,15 @@
-const { loadLocation } = require("../managers/locationManager");
-const { savePlayer } = require("../managers/playerManager");
-const { saveContainer } = require("../managers/containerManager");
-const { addItem } = require("../systems/inventorySystem");
+const {
+  loadLocation
+} = require("../managers/locationManager");
+const {
+  savePlayer
+} = require("../managers/playerManager");
+const {
+  saveContainer
+} = require("../managers/containerManager");
+const {
+  addItem
+} = require("../systems/inventorySystem");
 const {
   removeItem: removeItemFromContainer
 } = require("../systems/containerSystem");
@@ -10,8 +18,8 @@ const {
   resolveContainer
 } = require("../resolution/entityResolver");
 
-function performTakeFromContainerAction(player, action) {
-  const item = resolveItem(action.itemInput);
+function performTakeFromContainerAction(context) {
+  const item = resolveItem(context.action.itemInput);
 
   if (!item) {
     return {
@@ -21,7 +29,9 @@ function performTakeFromContainerAction(player, action) {
     };
   }
 
-  const container = resolveContainer(action.containerInput);
+  const container = resolveContainer(
+    context.action.containerInput
+  );
 
   if (!container) {
     return {
@@ -31,7 +41,7 @@ function performTakeFromContainerAction(player, action) {
     };
   }
 
-  const location = loadLocation(player.location);
+  const location = loadLocation(context.player.location);
   const locationObjects = location.objects || [];
 
   if (!locationObjects.includes(container.id)) {
@@ -62,7 +72,10 @@ function performTakeFromContainerAction(player, action) {
     };
   }
 
-  const removedItem = removeItemFromContainer(container, item.id);
+  const removedItem = removeItemFromContainer(
+    container,
+    item.id
+  );
 
   if (!removedItem) {
     return {
@@ -72,9 +85,9 @@ function performTakeFromContainerAction(player, action) {
     };
   }
 
-  addItem(player, item.id);
+  addItem(context.player, item.id);
   saveContainer(container);
-  savePlayer(player);
+  savePlayer(context.player);
 
   return {
     success: true,

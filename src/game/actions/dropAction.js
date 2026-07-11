@@ -1,11 +1,22 @@
-const { loadLocation, saveLocation } = require("../managers/locationManager");
-const { savePlayer } = require("../managers/playerManager");
-const { removeItem } = require("../systems/inventorySystem");
-const { addItem: addItemToLocation } = require("../systems/locationSystem");
-const { resolveItem } = require("../resolution/entityResolver");
+const {
+  loadLocation,
+  saveLocation
+} = require("../managers/locationManager");
+const {
+  savePlayer
+} = require("../managers/playerManager");
+const {
+  removeItem
+} = require("../systems/inventorySystem");
+const {
+  addItem: addItemToLocation
+} = require("../systems/locationSystem");
+const {
+  resolveItem
+} = require("../resolution/entityResolver");
 
-function performDropAction(player, action) {
-  const item = resolveItem(action.itemInput);
+function performDropAction(context) {
+  const item = resolveItem(context.action.itemInput);
 
   if (!item) {
     return {
@@ -15,8 +26,8 @@ function performDropAction(player, action) {
     };
   }
 
-  const location = loadLocation(player.location);
-  const removedItem = removeItem(player, item.id);
+  const location = loadLocation(context.player.location);
+  const removedItem = removeItem(context.player, item.id);
 
   if (!removedItem) {
     return {
@@ -27,7 +38,7 @@ function performDropAction(player, action) {
   }
 
   addItemToLocation(location, item.id);
-  savePlayer(player);
+  savePlayer(context.player);
   saveLocation(location);
 
   return {

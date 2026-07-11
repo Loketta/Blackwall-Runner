@@ -1,7 +1,9 @@
-const { getInventory } = require("../systems/inventorySystem");
+const {
+  getInventory
+} = require("../systems/inventorySystem");
 
-function performInventoryAction(player) {
-  const inventory = getInventory(player);
+function performInventoryAction(context) {
+  const inventory = getInventory(context.player);
 
   return {
     success: true,
