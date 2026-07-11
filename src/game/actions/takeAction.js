@@ -14,16 +14,17 @@ const {
 const {
   resolveItem
 } = require("../resolution/entityResolver");
+const {
+  ActionResult
+} = require("../results/actionResult");
 
 function performTakeAction(context) {
   const item = resolveItem(context.action.itemInput);
 
   if (!item) {
-    return {
-      success: false,
-      message: "I do not recognise that item.",
-      data: {}
-    };
+    return ActionResult.failure(
+      "I do not recognise that item."
+    );
   }
 
   const location = loadLocation(context.player.location);
@@ -33,24 +34,21 @@ function performTakeAction(context) {
   );
 
   if (!removedItem) {
-    return {
-      success: false,
-      message: "That item is not here.",
-      data: {}
-    };
+    return ActionResult.failure(
+      "That item is not here."
+    );
   }
 
   addItem(context.player, item.id);
   saveLocation(location);
   savePlayer(context.player);
 
-  return {
-    success: true,
-    message: `You take ${item.name}.`,
-    data: {
+  return ActionResult.success(
+    `You take ${item.name}.`,
+    {
       itemId: item.id
     }
-  };
+  );
 }
 
 module.exports = {
