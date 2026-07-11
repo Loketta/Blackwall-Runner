@@ -1,372 +1,119 @@
 # Blackwall Runner Architecture
 
-Version: 0.1.x Alpha
+Blackwall Runner is a persistent, genre-neutral tabletop RPG simulation engine designed for solo and multiplayer campaigns.
 
----
+The engine separates player intention, mechanical truth, world consequence and narrative presentation so that AI can support play without becoming the authority over game state.
 
-# Vision
+## Core principles
 
-Blackwall Runner is a persistent RPG simulation engine.
+- Player owns intention.
+- Engine owns truth.
+- World owns consequence.
+- AI owns presentation.
 
-It is **not** an AI chatbot with game mechanics.
+## High-level architecture
 
-It is **not** a Discord bot.
+    Player
+      ?
+    Interface
+      ?
+    Intent Parser
+      ?
+    Dispatcher
+      ?
+    Action Registry
+      ?
+    Action Module
+      ?
+    Simulation Engine
+      ?
+    Time, Events and Persistence
+      ?
+    Presentation
 
-It is **not** a website.
+Rulesets, settings, content policies and presentation packages are selected by the campaign and remain separate from the core engine.
 
-The engine is the authoritative simulation of the world.
+## Repository documentation
 
-Every interface—CLI, Discord, web, or AI narrator—communicates with the same engine.
+### Project direction
 
----
+- [Vision](VISION.md)
+- [Roadmap](ROADMAP.md)
 
-# Core Philosophy
+### Core technical documents
 
-The most important rule in Blackwall Runner is:
+- [Core Architecture](engine/core-architecture.md)
+- [Action System](engine/action-system.md)
+- [Simulation Engine](engine/simulation-engine.md)
+- [Persistence](engine/persistence.md)
+- [Scheduler](engine/scheduler.md)
+- [Multiplayer](engine/multiplayer.md)
 
-> **The Engine owns truth.**
+### Product and system design
 
-> **The Presentation Layer describes truth.**
+- [Modular Engine](design/modular-engine.md)
+- [Content Safety](design/content-safety.md)
+- [Rulesets](design/rulesets.md)
+- [Campaign Flow](design/campaign-flow.md)
+- [Spatial Modes](design/spatial-modes.md)
+- [Character Creation](design/character-creation.md)
+- [Simulation System](design/simulation-system.md)
 
-If something permanently changes the world, the engine decides.
+### Supporting references
 
-If something explains that change to a player, the presentation layer decides.
+- [Command Flow](COMMAND_FLOW.md)
+- [Data Model](DATA_MODEL.md)
+- [Player Agency](PLAYER_AGENCY.md)
 
-Examples:
+### Architecture decisions
 
-| Engine decides | Presentation decides |
-|----------------|----------------------|
-| Shop opens | "The battered shutters grind open." |
-| NPC moves | "You notice Finch crossing the street." |
-| Player takes damage | "The bullet tears through your shoulder." |
-| Item obtained | "You carefully pocket the old keycard." |
+- [Architecture Decision Records](adr/README.md)
 
-This separation is required for:
+## Current development phase
 
-- deterministic behaviour
-- multiplayer consistency
-- AI narration
-- multiple user interfaces
+Blackwall Runner is currently transitioning from a monolithic dispatcher into a modular action system.
 
----
+Completed action extractions include:
 
-# High-Level Architecture
+- Wait
+- Look
+- Inventory
+- Move
+- Talk
+- Open container
+- Take from container
+- Drop
+- Drop into container
 
-```
-Player
-    │
-    ▼
-Interface
-(CLI / Discord / Website / AI)
-    │
-    ▼
-Command / Intent Parser
-    │
-    ▼
-Action Dispatcher
-    │
-    ▼
-Simulation Systems
-    │
-    ▼
-Persistence
-```
+The next architectural phase will introduce:
 
-Only the engine modifies permanent game state.
+1. ActionContext
+2. Standard ActionResult
+3. Action Registry
+4. Simulation-aware actions
 
----
+## Reading order
 
-# Layer Responsibilities
+New contributors should read the documentation in this order:
 
-## Interface
+1. [VISION.md](VISION.md)
+2. [ARCHITECTURE.md](ARCHITECTURE.md)
+3. [ROADMAP.md](ROADMAP.md)
+4. [Core Architecture](engine/core-architecture.md)
+5. [Action System](engine/action-system.md)
+6. Relevant design documents
+7. Architecture Decision Records
 
-Responsible for communicating with players.
+## Architectural direction
 
-Examples:
+The core engine must remain independent from any single genre, setting or intellectual property.
 
-- CLI
-- Discord
-- Website
-- AI narrator
+Campaigns will eventually select modular packages for:
 
-Responsibilities:
+- Ruleset
+- Setting
+- Content Safety Profile
+- Presentation
+- Spatial Mode
 
-- receive input
-- display output
-
-Interfaces never directly change persistent state.
-
----
-
-## Command / Intent Layer
-
-Current implementation:
-
-- CLI commands
-
-Future implementation:
-
-- AI intent parser
-
-Both should produce the same structured engine actions.
-
-Example:
-
-```
-Player:
-
-Open the old crate.
-
-↓
-
-Engine Action
-
-{
-    type: "open",
-    target: "alley_crate"
-}
-```
-
-The parser interprets intent.
-
-The engine determines the result.
-
----
-
-## Action Dispatcher
-
-The dispatcher coordinates game actions.
-
-Responsibilities:
-
-- route actions
-- coordinate systems
-- validate interactions
-- save modified entities
-- return structured results
-
-The dispatcher should not become a large collection of game rules.
-
-Repeated logic should be extracted into systems.
-
----
-
-## Systems
-
-Systems implement game rules.
-
-Examples include:
-
-- inventory
-- movement
-- time
-- weather
-- containers
-- combat
-- dialogue
-- quests
-
-Systems answer questions such as:
-
-- Can this happen?
-- What changes?
-- What events are generated?
-
-Systems should not know how data is stored.
-
----
-
-## Managers
-
-Managers perform persistence.
-
-Responsibilities:
-
-- load
-- save
-- find
-- replace
-
-Managers should never decide whether an action is allowed.
-
-Changing from JSON to SQLite should primarily affect managers.
-
----
-
-## Persistence
-
-Current storage:
-
-- JSON
-
-Future:
-
-- SQLite
-- PostgreSQL
-
-The simulation should not require significant changes when persistence changes.
-
----
-
-# Simulation
-
-The world exists independently of players.
-
-Time passes.
-
-Weather changes.
-
-NPCs move.
-
-Shops open.
-
-Rent becomes due.
-
-Deliveries arrive.
-
-Players observe only what they are present to witness.
-
----
-
-# Scheduler
-
-The scheduler is the long-term driver of simulation.
-
-Anything that happens because time passes should eventually become a scheduled event.
-
-Examples:
-
-- NPC movement
-- shop opening
-- deliveries
-- meetings
-- phone calls
-- faction actions
-- story events
-
-Avoid hardcoded clock checks whenever possible.
-
----
-
-# World Objects
-
-Locations contain generic world objects.
-
-Examples:
-
-- containers
-- doors
-- terminals
-- elevators
-- vehicles
-- beds
-- vending machines
-
-Object type determines behaviour.
-
-This avoids creating separate architectures for every interactable object.
-
----
-
-# Entity Resolution
-
-The engine stores IDs.
-
-Players use names.
-
-The resolver translates player-facing language into engine identifiers.
-
-Example:
-
-```
-Protein Bar
-
-↓
-
-protein_bar
-```
-
-Future AI intent parsing should reuse this system.
-
----
-
-# Event Pipeline
-
-Time advancement produces simulation events.
-
-```
-Advance Time
-      │
-      ▼
-Simulation
-      │
-      ▼
-Events
-      │
-      ▼
-Presentation
-```
-
-Events should eventually contain structured data rather than narration.
-
-Example:
-
-```
-{
-    type: "shop_open",
-    locationId: "market_square",
-    data: {
-        shopId: "kuroda_mart"
-    }
-}
-```
-
-The presentation layer determines how players experience the event.
-
----
-
-# Multiplayer
-
-The engine is authoritative.
-
-Clients never decide permanent state.
-
-Every player should observe the same world.
-
-Different players may receive different information depending on:
-
-- location
-- visibility
-- timing
-- knowledge
-
----
-
-# Future Interfaces
-
-The architecture is intended to support:
-
-- CLI
-- Discord
-- Website
-- AI narration
-
-without duplicating simulation logic.
-
----
-
-# Architectural Test
-
-Before writing code, ask:
-
-**What responsibility does this feature have?**
-
-If it:
-
-- changes world state → Engine
-- stores data → Manager
-- applies rules → System
-- coordinates systems → Dispatcher
-- communicates with players → Presentation
-
-Maintaining these boundaries is more important than any individual feature.
+Theatre-of-the-mind play remains the first implementation target. Zone-based positioning and tactical battlemaps may be added later without changing which system owns spatial truth.
