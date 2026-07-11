@@ -1,6 +1,9 @@
 const {
   movePlayer
 } = require("../systems/movementSystem");
+const {
+  ActionResult
+} = require("../results/actionResult");
 
 function performMoveAction(context) {
   const newLocation = movePlayer(
@@ -9,20 +12,17 @@ function performMoveAction(context) {
   );
 
   if (!newLocation) {
-    return {
-      success: false,
-      message: "You cannot go that way.",
-      data: {}
-    };
+    return ActionResult.failure(
+      "You cannot go that way."
+    );
   }
 
-  return {
-    success: true,
-    message: `You move to ${newLocation.name}.`,
-    data: {
+  return ActionResult.success(
+    `You move to ${newLocation.name}.`,
+    {
       location: newLocation
     }
-  };
+  );
 }
 
 module.exports = {
