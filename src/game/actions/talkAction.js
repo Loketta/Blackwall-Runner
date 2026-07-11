@@ -4,36 +4,34 @@ const {
 const {
   resolveNpc
 } = require("../resolution/entityResolver");
+const {
+  ActionResult
+} = require("../results/actionResult");
 
 function performTalkAction(context) {
   const npc = resolveNpc(context.action.npcInput);
 
   if (!npc) {
-    return {
-      success: false,
-      message: "I do not recognise that person.",
-      data: {}
-    };
+    return ActionResult.failure(
+      "I do not recognise that person."
+    );
   }
 
   const location = loadLocation(context.player.location);
   const npcIds = location.npcs || [];
 
   if (!npcIds.includes(npc.id)) {
-    return {
-      success: false,
-      message: "That person is not here.",
-      data: {}
-    };
+    return ActionResult.failure(
+      "That person is not here."
+    );
   }
 
-  return {
-    success: true,
-    message: npc.dialogue,
-    data: {
+  return ActionResult.success(
+    npc.dialogue,
+    {
       npc
     }
-  };
+  );
 }
 
 module.exports = {
