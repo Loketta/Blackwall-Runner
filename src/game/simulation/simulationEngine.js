@@ -9,7 +9,7 @@ function validateElapsedMinutes(minutes) {
   }
 }
 
-function advanceSimulation(world, minutes) {
+function advanceSimulation(world, minutes, services = {}) {
   validateElapsedMinutes(minutes);
 
   if (minutes === 0) {
@@ -21,7 +21,7 @@ function advanceSimulation(world, minutes) {
 
   advanceWorldTime(world, minutes);
 
-  const events = processWorldEvents(world);
+  const events = processWorldEvents(world, services);
 
   return {
     elapsedMinutes: minutes,
