@@ -18,3 +18,7 @@ Planned records include:
 - ActionResult
 - Closed-world AI
 - Spatial model
+
+## Accepted Decisions
+
+- [ADR-0001: Use an Event-Driven Simulation](0001-event-driven-simulation.md)

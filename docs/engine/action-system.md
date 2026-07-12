@@ -50,3 +50,31 @@ Later additions may include:
 - significance
 - notifications
 - scheduledEvents
+
+## Events and Presentation
+
+Actions receive a standardised `ActionContext` and return a standardised `ActionResult`.
+
+Actions may cause structured simulation events.
+
+Actions do not own narrative presentation.
+
+```text
+Player intention
+        ↓
+ActionContext
+        ↓
+Action
+        ↓
+Simulation and events
+        ↓
+ActionResult
+        ↓
+Presentation
+```
+
+The engine establishes what happened.
+
+Presentation describes accepted truth without changing it.
+
+See [Event Pipeline](event-pipeline.md).
