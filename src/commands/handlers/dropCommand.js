@@ -1,4 +1,11 @@
-const { performAction } = require("../../game/dispatcher/actionDispatcher");
+"use strict";
+
+const {
+  performAction
+} = require("../../game/dispatcher/actionDispatcher");
+const {
+  getEventServices
+} = require("../../game/events/eventServices");
 
 function runDropCommand(player, args) {
   const intoIndex = args.findIndex(function (arg) {
@@ -8,10 +15,14 @@ function runDropCommand(player, args) {
   if (intoIndex === -1) {
     const itemInput = args.join(" ").trim();
 
-    const result = performAction(player, {
-      type: "drop",
-      itemInput
-    });
+    const result = performAction(
+      player,
+      {
+        type: "drop",
+        itemInput
+      },
+      getEventServices()
+    );
 
     console.log(result.message);
     return;
