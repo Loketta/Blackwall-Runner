@@ -46,15 +46,11 @@ function createScheduledDomainEvent(
   scheduledEvent,
   services = {}
 ) {
-  const eventRecorder = services.eventRecorder;
-
   if (scheduledEvent.type !== "shop_opened") {
-    return {
-      type: scheduledEvent.type,
-      locationId: scheduledEvent.locationId || null,
-      data: scheduledEvent.data || {}
-    };
+    return null;
   }
+
+  const eventRecorder = services.eventRecorder;
 
   if (!eventRecorder) {
     return null;
