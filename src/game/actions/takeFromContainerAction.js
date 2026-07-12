@@ -1,3 +1,5 @@
+"use strict";
+
 const {
   loadLocation
 } = require("../managers/locationManager");
@@ -7,6 +9,9 @@ const {
 const {
   saveContainer
 } = require("../managers/containerManager");
+const {
+  loadWorld
+} = require("../managers/worldManager");
 const {
   addItem
 } = require("../systems/inventorySystem");
@@ -20,9 +25,32 @@ const {
 const {
   ActionResult
 } = require("../results/actionResult");
+const {
+  recordItemTransferredEvent
+} = require("../events/itemTransferRecorder");
 
 function performTakeFromContainerAction(context) {
-  const item = resolveItem(context.action.itemInput);
+  const resolveItemService =
+    context.services.resolveItem ?? resolveItem;
+  const resolveContainerService =
+    context.services.resolveContainer ?? resolveContainer;
+  const loadLocationService =
+    context.services.loadLocation ?? loadLocation;
+  const saveContainerService =
+    context.services.saveContainer ?? saveContainer;
+  const savePlayerService =
+    context.services.savePlayer ?? savePlayer;
+  const loadWorldService =
+    context.services.loadWorld ?? loadWorld;
+  const addItemService =
+    context.services.addItem ?? addItem;
+  const removeItemFromContainerService =
+    context.services.removeItemFromContainer ??
+    removeItemFromContainer;
+
+  const item = resolveItemService(
+    context.action.itemInput
+  );
 
   if (!item) {
     return ActionResult.failure(
@@ -30,7 +58,7 @@ function performTakeFromContainerAction(context) {
     );
   }
 
-  const container = resolveContainer(
+  const container = resolveContainerService(
     context.action.containerInput
   );
 
@@ -40,7 +68,10 @@ function performTakeFromContainerAction(context) {
     );
   }
 
-  const location = loadLocation(context.player.location);
+  const location = loadLocationService(
+    context.player.location
+  );
+
   const locationObjects = location.objects || [];
 
   if (!locationObjects.includes(container.id)) {
@@ -67,10 +98,11 @@ function performTakeFromContainerAction(context) {
     );
   }
 
-  const removedItem = removeItemFromContainer(
-    container,
-    item.id
-  );
+  const removedItem =
+    removeItemFromContainerService(
+      container,
+      item.id
+    );
 
   if (!removedItem) {
     return ActionResult.failure(
@@ -78,15 +110,32 @@ function performTakeFromContainerAction(context) {
     );
   }
 
-  addItem(context.player, item.id);
-  saveContainer(container);
-  savePlayer(context.player);
+  addItemService(
+    context.player,
+    item.id
+  );
+
+  saveContainerService(container);
+  savePlayerService(context.player);
+
+  const world = loadWorldService();
+
+  const recordedEvent =
+    recordItemTransferredEvent({
+      context,
+      world,
+      itemId: item.id,
+      fromEntityId: container.id,
+      toEntityId: context.player.id,
+      source: "takeFromContainerAction"
+    });
 
   return ActionResult.success(
     `You take ${item.name} from ${container.name}.`,
     {
       itemId: item.id,
-      containerId: container.id
+      containerId: container.id,
+      recordedEvent
     }
   );
 }
