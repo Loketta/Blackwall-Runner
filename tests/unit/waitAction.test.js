@@ -49,7 +49,7 @@ test("Records a TimePassed event", () => {
   const recordedEvent = { eventId: "event_1" };
   const context = {
     player: {
-      id: "player_1",
+      id: "player_runner_1",
       location: "back_alley_1"
     },
     services: {
@@ -72,7 +72,7 @@ test("Records a TimePassed event", () => {
   assert.deepStrictEqual(recordedData, {
     type: "TimePassed",
     worldTime: "2045-01-02T03:35:00",
-    actorId: "player_1",
+    actorId: "player_runner_1",
     locationId: "back_alley_1",
     payload: {
       elapsedMinutes: 30
@@ -86,7 +86,7 @@ test("Records a TimePassed event", () => {
 test("Does not record when no recorder is supplied", () => {
   const result = recordTimePassedEvent(
     {
-      player: { id: "player_1" },
+      player: { id: "player_runner_1" },
       services: {}
     },
     createWorld(),
@@ -99,7 +99,7 @@ test("Does not record when no recorder is supplied", () => {
 test("Supports players without a location identifier", () => {
   let recordedData = null;
   const context = {
-    player: { id: "player_1" },
+    player: { id: "player_runner_1" },
     services: {
       eventRecorder: {
         record(data) {

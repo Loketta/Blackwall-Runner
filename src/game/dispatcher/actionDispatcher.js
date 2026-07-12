@@ -1,4 +1,6 @@
-﻿const {
+﻿"use strict";
+
+const {
   ActionContext
 } = require("../context/actionContext");
 const {
@@ -38,7 +40,8 @@ const {
 function performAction(player, action, services = {}) {
   const context = new ActionContext({
     player,
-    action
+    action,
+    services
   });
 
   if (action.type === "look") {

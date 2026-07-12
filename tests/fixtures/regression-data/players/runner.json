@@ -1,4 +1,5 @@
 {
+    "id": "player_runner_1",
     "name": "Runner",
     "role": "Solo",
     "health": 40,
