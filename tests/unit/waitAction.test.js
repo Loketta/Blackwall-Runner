@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const assert = require("assert");
 const {
@@ -50,7 +50,7 @@ test("Records a TimePassed event", () => {
   const context = {
     player: {
       id: "player_1",
-      locationId: "back_alley_1"
+      location: "back_alley_1"
     },
     services: {
       eventRecorder: {

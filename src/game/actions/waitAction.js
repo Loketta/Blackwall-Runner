@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const { loadWorld, saveWorld } = require("../managers/worldManager");
 const { advanceSimulation } = require("../simulation/simulationEngine");
@@ -23,7 +23,7 @@ function recordTimePassedEvent(context, world, simulationResult) {
     type: "TimePassed",
     worldTime: formatWorldTime(world),
     actorId: context.player.id,
-    locationId: context.player.locationId ?? null,
+    locationId: context.player.locationId ?? context.player.location ?? null,
     payload: {
       elapsedMinutes: simulationResult.elapsedMinutes
     },
