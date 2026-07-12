@@ -1,4 +1,4 @@
-const {
+﻿const {
   ActionContext
 } = require("../context/actionContext");
 const {
@@ -35,7 +35,7 @@ const {
   performDropIntoContainerAction
 } = require("../actions/dropIntoContainerAction");
 
-function performAction(player, action) {
+function performAction(player, action, services = {}) {
   const context = new ActionContext({
     player,
     action
@@ -87,3 +87,4 @@ function performAction(player, action) {
 module.exports = {
   performAction
 };
+
