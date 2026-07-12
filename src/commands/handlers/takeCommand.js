@@ -1,4 +1,11 @@
-const { performAction } = require("../../game/dispatcher/actionDispatcher");
+"use strict";
+
+const {
+  performAction
+} = require("../../game/dispatcher/actionDispatcher");
+const {
+  getEventServices
+} = require("../../game/events/eventServices");
 
 function runTakeCommand(player, args) {
   const fromIndex = args.findIndex(function (arg) {
@@ -8,10 +15,14 @@ function runTakeCommand(player, args) {
   if (fromIndex === -1) {
     const itemInput = args.join(" ").trim();
 
-    const result = performAction(player, {
-      type: "take",
-      itemInput
-    });
+    const result = performAction(
+      player,
+      {
+        type: "take",
+        itemInput
+      },
+      getEventServices()
+    );
 
     console.log(result.message);
     return;

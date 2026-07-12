@@ -1,3 +1,5 @@
+"use strict";
+
 const {
   loadLocation,
   saveLocation
@@ -5,6 +7,9 @@ const {
 const {
   savePlayer
 } = require("../managers/playerManager");
+const {
+  loadWorld
+} = require("../managers/worldManager");
 const {
   addItem
 } = require("../systems/inventorySystem");
@@ -17,9 +22,30 @@ const {
 const {
   ActionResult
 } = require("../results/actionResult");
+const {
+  recordItemTransferredEvent
+} = require("../events/itemTransferRecorder");
 
 function performTakeAction(context) {
-  const item = resolveItem(context.action.itemInput);
+  const resolveItemService =
+    context.services.resolveItem ?? resolveItem;
+  const loadLocationService =
+    context.services.loadLocation ?? loadLocation;
+  const saveLocationService =
+    context.services.saveLocation ?? saveLocation;
+  const savePlayerService =
+    context.services.savePlayer ?? savePlayer;
+  const loadWorldService =
+    context.services.loadWorld ?? loadWorld;
+  const addItemService =
+    context.services.addItem ?? addItem;
+  const removeItemFromLocationService =
+    context.services.removeItemFromLocation ??
+    removeItemFromLocation;
+
+  const item = resolveItemService(
+    context.action.itemInput
+  );
 
   if (!item) {
     return ActionResult.failure(
@@ -27,8 +53,11 @@ function performTakeAction(context) {
     );
   }
 
-  const location = loadLocation(context.player.location);
-  const removedItem = removeItemFromLocation(
+  const location = loadLocationService(
+    context.player.location
+  );
+
+  const removedItem = removeItemFromLocationService(
     location,
     item.id
   );
@@ -39,14 +68,26 @@ function performTakeAction(context) {
     );
   }
 
-  addItem(context.player, item.id);
-  saveLocation(location);
-  savePlayer(context.player);
+  addItemService(context.player, item.id);
+  saveLocationService(location);
+  savePlayerService(context.player);
+
+  const world = loadWorldService();
+
+  const recordedEvent = recordItemTransferredEvent({
+    context,
+    world,
+    itemId: item.id,
+    fromEntityId: location.id,
+    toEntityId: context.player.id,
+    source: "takeAction"
+  });
 
   return ActionResult.success(
     `You take ${item.name}.`,
     {
-      itemId: item.id
+      itemId: item.id,
+      recordedEvent
     }
   );
 }
