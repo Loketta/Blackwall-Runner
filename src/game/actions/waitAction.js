@@ -3,14 +3,7 @@
 const { loadWorld, saveWorld } = require("../managers/worldManager");
 const { advanceSimulation } = require("../simulation/simulationEngine");
 const { ActionResult } = require("../results/actionResult");
-
-function formatWorldTime(world) {
-  const year = String(world.calendar.year).padStart(4, "0");
-  const month = String(world.calendar.month).padStart(2, "0");
-  const day = String(world.calendar.dayOfMonth).padStart(2, "0");
-
-  return `${year}-${month}-${day}T${world.currentTime}:00`;
-}
+const { formatWorldTime } = require("../time/worldTimeFormatter");
 
 function recordTimePassedEvent(context, world, simulationResult) {
   const eventRecorder = context.services.eventRecorder;
@@ -64,6 +57,5 @@ function performWaitAction(context) {
 
 module.exports = {
   performWaitAction,
-  formatWorldTime,
   recordTimePassedEvent
 };

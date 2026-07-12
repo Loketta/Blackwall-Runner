@@ -2,9 +2,11 @@
 
 const assert = require("assert");
 const {
-  formatWorldTime,
   recordTimePassedEvent
 } = require("../../src/game/actions/waitAction");
+const {
+  formatWorldTime
+} = require("../../src/game/time/worldTimeFormatter");
 
 let passed = 0;
 let failed = 0;
