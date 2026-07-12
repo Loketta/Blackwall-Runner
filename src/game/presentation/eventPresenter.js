@@ -19,7 +19,7 @@ function presentWeatherChanged(event) {
 }
 
 function presentRentDue(event) {
-  return `Monthly rent is due: ${event.data.monthlyCost} credits.`;
+  return `Monthly rent is due: ${event.payload.monthlyCost} credits.`;
 }
 
 function presentEvent(event) {
@@ -31,7 +31,7 @@ function presentEvent(event) {
     return presentWeatherChanged(event);
   }
 
-  if (event.type === "rent_due") {
+  if (event.type === "RentDue") {
     return presentRentDue(event);
   }
 
