@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run unit && npm run regression",
-    "unit": "node tests/unit/simulationEngine.test.js && node tests/unit/actionContext.test.js && node tests/unit/actionResult.test.js && node tests/unit/domainEvent.test.js && node tests/unit/eventStore.test.js && node tests/unit/persistentEventStore.test.js && node tests/unit/eventRecorder.test.js && node tests/unit/waitAction.test.js && node tests/unit/moveAction.test.js && node tests/unit/itemTransferRecorder.test.js && node tests/unit/takeAction.test.js && node tests/unit/dropAction.test.js && node tests/unit/takeFromContainerAction.test.js",
+    "unit": "node tests/unit/simulationEngine.test.js && node tests/unit/actionContext.test.js && node tests/unit/actionResult.test.js && node tests/unit/domainEvent.test.js && node tests/unit/eventStore.test.js && node tests/unit/persistentEventStore.test.js && node tests/unit/eventRecorder.test.js && node tests/unit/waitAction.test.js && node tests/unit/moveAction.test.js && node tests/unit/itemTransferRecorder.test.js && node tests/unit/takeAction.test.js && node tests/unit/dropAction.test.js && node tests/unit/takeFromContainerAction.test.js && node tests/unit/dropIntoContainerAction.test.js",
     "regression": "node tests/regression/runRegression.js"
   },
   "keywords": [],

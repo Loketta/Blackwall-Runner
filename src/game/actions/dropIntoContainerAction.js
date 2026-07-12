@@ -1,3 +1,5 @@
+"use strict";
+
 const {
   loadLocation
 } = require("../managers/locationManager");
@@ -7,6 +9,9 @@ const {
 const {
   saveContainer
 } = require("../managers/containerManager");
+const {
+  loadWorld
+} = require("../managers/worldManager");
 const {
   removeItem
 } = require("../systems/inventorySystem");
@@ -20,9 +25,32 @@ const {
 const {
   ActionResult
 } = require("../results/actionResult");
+const {
+  recordItemTransferredEvent
+} = require("../events/itemTransferRecorder");
 
 function performDropIntoContainerAction(context) {
-  const item = resolveItem(context.action.itemInput);
+  const resolveItemService =
+    context.services.resolveItem ?? resolveItem;
+  const resolveContainerService =
+    context.services.resolveContainer ?? resolveContainer;
+  const loadLocationService =
+    context.services.loadLocation ?? loadLocation;
+  const saveContainerService =
+    context.services.saveContainer ?? saveContainer;
+  const savePlayerService =
+    context.services.savePlayer ?? savePlayer;
+  const loadWorldService =
+    context.services.loadWorld ?? loadWorld;
+  const removeItemService =
+    context.services.removeItem ?? removeItem;
+  const addItemToContainerService =
+    context.services.addItemToContainer ??
+    addItemToContainer;
+
+  const item = resolveItemService(
+    context.action.itemInput
+  );
 
   if (!item) {
     return ActionResult.failure(
@@ -30,7 +58,7 @@ function performDropIntoContainerAction(context) {
     );
   }
 
-  const container = resolveContainer(
+  const container = resolveContainerService(
     context.action.containerInput
   );
 
@@ -40,7 +68,10 @@ function performDropIntoContainerAction(context) {
     );
   }
 
-  const location = loadLocation(context.player.location);
+  const location = loadLocationService(
+    context.player.location
+  );
+
   const locationObjects = location.objects || [];
 
   if (!locationObjects.includes(container.id)) {
@@ -67,7 +98,7 @@ function performDropIntoContainerAction(context) {
     );
   }
 
-  const removedItem = removeItem(
+  const removedItem = removeItemService(
     context.player,
     item.id
   );
@@ -78,15 +109,32 @@ function performDropIntoContainerAction(context) {
     );
   }
 
-  addItemToContainer(container, item.id);
-  savePlayer(context.player);
-  saveContainer(container);
+  addItemToContainerService(
+    container,
+    item.id
+  );
+
+  savePlayerService(context.player);
+  saveContainerService(container);
+
+  const world = loadWorldService();
+
+  const recordedEvent =
+    recordItemTransferredEvent({
+      context,
+      world,
+      itemId: item.id,
+      fromEntityId: context.player.id,
+      toEntityId: container.id,
+      source: "dropIntoContainerAction"
+    });
 
   return ActionResult.success(
     `You place ${item.name} inside ${container.name}.`,
     {
       itemId: item.id,
-      containerId: container.id
+      containerId: container.id,
+      recordedEvent
     }
   );
 }
