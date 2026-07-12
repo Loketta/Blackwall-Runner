@@ -15,7 +15,7 @@ function presentShopOpened(event) {
 }
 
 function presentWeatherChanged(event) {
-  return `The weather changes. It is now ${event.data.newWeather}.`;
+  return `The weather changes. It is now ${event.payload.newWeather}.`;
 }
 
 function presentRentDue(event) {
@@ -27,7 +27,7 @@ function presentEvent(event) {
     return presentShopOpened(event);
   }
 
-  if (event.type === "weather_changed") {
+  if (event.type === "WeatherChanged") {
     return presentWeatherChanged(event);
   }
 
