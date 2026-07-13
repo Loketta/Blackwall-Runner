@@ -157,7 +157,8 @@ function runTest(test) {
       encoding: "utf8",
       env: {
         ...process.env,
-        AI_PROVIDER: "mock"
+        AI_PROVIDER: "mock",
+        PRESENTATION_MODE: "developer"
       }
     }
   );

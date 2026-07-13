@@ -1,12 +1,20 @@
 "use strict";
 
 const {
+  loadRuntimeConfig
+} = require("../../config/runtimeConfig");
+const {
   describeLocation
 } = require("../../game/presentation/locationDescriber");
 const {
   createPresentationPipeline
 } = require(
   "../../game/presentation/createPresentationPipeline"
+);
+const {
+  PresentationPolicy
+} = require(
+  "../../game/presentation/presentationPolicy"
 );
 const {
   performAction
@@ -36,6 +44,8 @@ async function runLookCommand(
   const presentationPipeline =
     services.presentationPipeline ??
     defaultPresentationPipeline;
+  const configLoader =
+    services.configLoader ?? loadRuntimeConfig;
   const log = services.log ?? console.log;
 
   const result = performActionService(player, {
@@ -47,28 +57,46 @@ async function runLookCommand(
     return;
   }
 
-  describeLocationService(result.data.location);
+  const presentationMode =
+    services.presentationMode ??
+    configLoader().presentationMode;
 
-  const world = loadWorldService();
-  const eventServices =
-    getEventServicesService();
-
-  const narrationResult =
-    await presentationPipeline.present({
-      player,
-      world,
-      playerInput: "I look around.",
-      eventHistory:
-        eventServices?.eventHistory ?? null,
-      mode: "describe_location",
-      instructions: {
-        preservePlayerAgency: true,
-        useOnlyProvidedFacts: true
-      }
+  const presentationPolicy =
+    services.presentationPolicy ??
+    new PresentationPolicy({
+      mode: presentationMode
     });
 
-  log("");
-  log(narrationResult.narration);
+  await presentationPolicy.present({
+    async createNarration() {
+      const world = loadWorldService();
+      const eventServices =
+        getEventServicesService();
+
+      return presentationPipeline.present({
+        player,
+        world,
+        playerInput: "I look around.",
+        eventHistory:
+          eventServices?.eventHistory ?? null,
+        mode: "describe_location",
+        instructions: {
+          preservePlayerAgency: true,
+          useOnlyProvidedFacts: true
+        }
+      });
+    },
+
+    renderNarration(narrationResult) {
+      log(narrationResult.narration);
+    },
+
+    renderFallback() {
+      describeLocationService(
+        result.data.location
+      );
+    }
+  });
 }
 
 module.exports = {

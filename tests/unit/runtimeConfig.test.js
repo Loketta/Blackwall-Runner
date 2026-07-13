@@ -25,25 +25,31 @@ console.log("RUNTIME CONFIG TESTS");
 console.log("================================");
 console.log("");
 
-test("Defaults to the mock provider", () => {
-  const config = loadRuntimeConfig({});
+test(
+  "Defaults to mock and developer mode",
+  () => {
+    const config = loadRuntimeConfig({});
 
-  assert.deepStrictEqual(config, {
-    aiProvider: "mock",
-    openAIApiKey: null,
-    openAIModel: null
-  });
-});
+    assert.deepStrictEqual(config, {
+      aiProvider: "mock",
+      presentationMode: "developer",
+      openAIApiKey: null,
+      openAIModel: null
+    });
+  }
+);
 
-test("Normalises provider settings", () => {
+test("Normalises runtime settings", () => {
   const config = loadRuntimeConfig({
     AI_PROVIDER: "  OPENAI  ",
+    PRESENTATION_MODE: "  PLAYER  ",
     OPENAI_API_KEY: "  test-key  ",
     OPENAI_MODEL: "  test-model  "
   });
 
   assert.deepStrictEqual(config, {
     aiProvider: "openai",
+    presentationMode: "player",
     openAIApiKey: "test-key",
     openAIModel: "test-model"
   });
@@ -57,6 +63,18 @@ test("Rejects unsupported providers", () => {
     /Unsupported AI_PROVIDER/
   );
 });
+
+test(
+  "Rejects unsupported presentation modes",
+  () => {
+    assert.throws(
+      () => loadRuntimeConfig({
+        PRESENTATION_MODE: "unknown"
+      }),
+      /Unsupported PRESENTATION_MODE/
+    );
+  }
+);
 
 test("Requires an API key in OpenAI mode", () => {
   assert.throws(

@@ -12,6 +12,12 @@ const SUPPORTED_PROVIDERS =
     "openai"
   ]);
 
+const SUPPORTED_PRESENTATION_MODES =
+  Object.freeze([
+    "developer",
+    "player"
+  ]);
+
 function readOptionalString(
   environment,
   fieldName
@@ -67,6 +73,24 @@ function loadRuntimeConfig(
     );
   }
 
+  const presentationMode = (
+    readOptionalString(
+      environment,
+      "PRESENTATION_MODE"
+    ) ?? "developer"
+  ).toLowerCase();
+
+  if (
+    !SUPPORTED_PRESENTATION_MODES.includes(
+      presentationMode
+    )
+  ) {
+    throw new RangeError(
+      "Unsupported PRESENTATION_MODE: " +
+      presentationMode
+    );
+  }
+
   const apiKey = readOptionalString(
     environment,
     "OPENAI_API_KEY"
@@ -93,6 +117,7 @@ function loadRuntimeConfig(
 
   return Object.freeze({
     aiProvider: provider,
+    presentationMode,
     openAIApiKey: apiKey,
     openAIModel: model
   });

@@ -79,8 +79,11 @@ function createServices(tracker = {}) {
       };
     },
 
+    presentationMode: "player",
+
     presentationPipeline: {
       async present(options) {
+        tracker.presentationWasCalled = true;
         tracker.presentationOptions =
           options;
 
@@ -139,10 +142,29 @@ async function runTests() {
   );
 
   await test(
-    "Preserves the detailed location description",
+    "Does not print the raw location when narration succeeds",
+    async () => {
+      const tracker = {};
+
+      await runLookCommand(
+        createPlayer(),
+        createServices(tracker)
+      );
+
+      assert.strictEqual(
+        tracker.describedLocation,
+        undefined
+      );
+    }
+  );
+
+  await test(
+    "Prints raw output without narration in developer mode",
     async () => {
       const tracker = {};
       const services = createServices(tracker);
+
+      services.presentationMode = "developer";
 
       await runLookCommand(
         createPlayer(),
@@ -153,9 +175,18 @@ async function runTests() {
         tracker.describedLocation,
         services.expected.location
       );
+
+      assert.strictEqual(
+        tracker.presentationWasCalled,
+        undefined
+      );
+
+      assert.strictEqual(
+        tracker.worldWasLoaded,
+        undefined
+      );
     }
   );
-
   await test(
     "Loads world and event history for presentation",
     async () => {
@@ -220,7 +251,7 @@ async function runTests() {
   );
 
   await test(
-    "Prints narration after the existing output",
+    "Prints narration without raw location output",
     async () => {
       const tracker = {};
 
@@ -232,7 +263,6 @@ async function runTests() {
       assert.deepStrictEqual(
         tracker.logMessages,
         [
-          "",
           "Runner acts in Back Alley. " +
             "The weather is light rain."
         ]
@@ -250,6 +280,8 @@ async function runTests() {
       await runLookCommand(
         createPlayer(),
         {
+          presentationMode: "player",
+
           performAction() {
             return {
               success: true,
@@ -298,13 +330,42 @@ async function runTests() {
       assert.deepStrictEqual(
         tracker.logMessages,
         [
-          "",
           "Asynchronous narration."
         ]
       );
     }
   );
 
+  await test(
+    "Falls back to the raw location when narration fails",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationPipeline = {
+        async present() {
+          throw new Error(
+            "Narration service unavailable."
+          );
+        }
+      };
+
+      await runLookCommand(
+        createPlayer(),
+        services
+      );
+
+      assert.strictEqual(
+        tracker.describedLocation,
+        services.expected.location
+      );
+
+      assert.strictEqual(
+        tracker.logMessages,
+        undefined
+      );
+    }
+  );
   await test(
     "Prints action failures without presenting",
     async () => {
