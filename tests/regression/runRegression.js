@@ -154,7 +154,11 @@ function runTest(test) {
     [entryPoint, ...test.args],
     {
       cwd: projectRoot,
-      encoding: "utf8"
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_PROVIDER: "mock"
+      }
     }
   );
 

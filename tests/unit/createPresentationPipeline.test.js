@@ -164,6 +164,7 @@ async function runTests() {
     async () => {
       const pipeline =
         createPresentationPipeline({
+          provider: "mock",
           aiContextBuilder:
             createAIContextBuilder(),
           narrativeContextBuilder:
