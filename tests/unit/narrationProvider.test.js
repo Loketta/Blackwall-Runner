@@ -17,6 +17,11 @@ const {
 } = require(
   "../../src/game/presentation/narrationProvider"
 );
+const {
+  NarrationMetrics
+} = require(
+  "../../src/game/presentation/narrationMetrics"
+);
 
 let passed = 0;
 let failed = 0;
@@ -94,6 +99,7 @@ function createNarrator() {
 function createProvider({
   narrator = createNarrator(),
   cache = new NarrationCache(),
+  metrics = new NarrationMetrics(),
   promptVersion = "scene-v1",
   model = "test-model",
   clock = () =>
@@ -104,6 +110,7 @@ function createProvider({
   return new NarrationProvider({
     narrator,
     cache,
+    metrics,
     promptVersion,
     model,
     clock
@@ -391,6 +398,127 @@ async function runTests() {
     }
   );
 
+  await test(
+    "Records a generated location cache miss",
+    async () => {
+      const metrics = new NarrationMetrics();
+      const provider = createProvider({
+        metrics
+      });
+
+      await provider.narrate(
+        createRequest()
+      );
+
+      assert.deepStrictEqual(
+        provider.getMetrics(),
+        {
+          requests: 1,
+          generated: 1,
+          cached: 0,
+          cacheHits: 0,
+          cacheMisses: 1,
+          cacheHitRate: 0
+        }
+      );
+    }
+  );
+
+  await test(
+    "Records a cached location narration",
+    async () => {
+      const metrics = new NarrationMetrics();
+      const provider = createProvider({
+        metrics
+      });
+      const request = createRequest();
+
+      await provider.narrate(request);
+      await provider.narrate(request);
+
+      assert.deepStrictEqual(
+        provider.getMetrics(),
+        {
+          requests: 2,
+          generated: 1,
+          cached: 1,
+          cacheHits: 1,
+          cacheMisses: 1,
+          cacheHitRate: 0.5
+        }
+      );
+    }
+  );
+
+  await test(
+    "Records generated non-cacheable narration",
+    async () => {
+      const metrics = new NarrationMetrics();
+      const provider = createProvider({
+        metrics
+      });
+
+      await provider.narrate(
+        createRequest({
+          mode: "narrate_action"
+        })
+      );
+
+      assert.deepStrictEqual(
+        provider.getMetrics(),
+        {
+          requests: 1,
+          generated: 1,
+          cached: 0,
+          cacheHits: 0,
+          cacheMisses: 0,
+          cacheHitRate: 0
+        }
+      );
+    }
+  );
+
+  await test(
+    "Does not record failed narration",
+    async () => {
+      const metrics = new NarrationMetrics();
+
+      const provider = createProvider({
+        metrics,
+        narrator: {
+          async narrate() {
+            throw new Error(
+              "Narration unavailable."
+            );
+          }
+        }
+      });
+
+      await assert.rejects(
+        () => provider.narrate(
+          createRequest()
+        ),
+        /Narration unavailable/
+      );
+
+      assert.strictEqual(
+        provider.getMetrics().requests,
+        0
+      );
+    }
+  );
+
+  await test(
+    "Rejects an invalid metrics service",
+    async () => {
+      assert.throws(
+        () => createProvider({
+          metrics: {}
+        }),
+        /metrics must provide recordGenerated and recordCached and snapshot functions/
+      );
+    }
+  );
   await test(
     "Rejects an invalid narration request",
     async () => {

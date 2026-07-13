@@ -22,6 +22,9 @@ const {
   NarrationProvider
 } = require("./narrationProvider");
 const {
+  NarrationMetrics
+} = require("./narrationMetrics");
+const {
   PresentationPipeline
 } = require("./presentationPipeline");
 
@@ -50,6 +53,7 @@ function createPresentationPipeline({
     new NarrativeContextBuilder(),
   narrator = null,
   narrationCache = new NarrationCache(),
+  narrationMetrics = new NarrationMetrics(),
   promptVersion = "scene-v1",
   clock = () => new Date(),
   configLoader = loadRuntimeConfig,
@@ -103,6 +107,7 @@ function createPresentationPipeline({
     new NarrationProvider({
       narrator: selectedNarrator,
       cache: narrationCache,
+      metrics: narrationMetrics,
       promptVersion,
       model: modelLabel,
       clock

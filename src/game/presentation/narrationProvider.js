@@ -9,6 +9,9 @@ const {
 const {
   SceneFingerprint
 } = require("./sceneFingerprint");
+const {
+  NarrationMetrics
+} = require("./narrationMetrics");
 
 const CACHEABLE_MODES = new Set([
   "describe_location"
@@ -96,6 +99,7 @@ function createCachedResult(snapshot) {
 class NarrationProvider {
   #narrator;
   #cache;
+  #metrics;
   #promptVersion;
   #model;
   #clock;
@@ -103,6 +107,7 @@ class NarrationProvider {
   constructor({
     narrator,
     cache,
+    metrics = new NarrationMetrics(),
     promptVersion,
     model,
     clock = () => new Date()
@@ -116,6 +121,15 @@ class NarrationProvider {
       cache,
       ["find", "store"],
       "cache"
+    );
+    requireService(
+      metrics,
+      [
+        "recordGenerated",
+        "recordCached",
+        "snapshot"
+      ],
+      "metrics"
     );
 
     this.#promptVersion =
@@ -133,6 +147,7 @@ class NarrationProvider {
 
     this.#narrator = narrator;
     this.#cache = cache;
+    this.#metrics = metrics;
     this.#clock = clock;
   }
 
@@ -144,7 +159,12 @@ class NarrationProvider {
     }
 
     if (!CACHEABLE_MODES.has(request.mode)) {
-      return this.#narrator.narrate(request);
+      const narrationResult =
+        await this.#narrator.narrate(request);
+
+      this.#metrics.recordGenerated();
+
+      return narrationResult;
     }
 
     const fingerprint = new SceneFingerprint({
@@ -159,6 +179,8 @@ class NarrationProvider {
     );
 
     if (cachedSnapshot !== null) {
+      this.#metrics.recordCached();
+
       return createCachedResult(
         cachedSnapshot
       );
@@ -183,7 +205,15 @@ class NarrationProvider {
 
     this.#cache.store(snapshot);
 
+    this.#metrics.recordGenerated({
+      cacheMiss: true
+    });
+
     return narrationResult;
+  }
+
+  getMetrics() {
+    return this.#metrics.snapshot();
   }
 }
 
