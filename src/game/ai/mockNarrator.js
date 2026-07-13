@@ -5,7 +5,7 @@ const {
 } = require("./narrationRequest");
 
 class MockNarrator {
-  narrate(request) {
+  async narrate(request) {
     if (!(request instanceof NarrationRequest)) {
       throw new TypeError(
         "MockNarrator requires a NarrationRequest."

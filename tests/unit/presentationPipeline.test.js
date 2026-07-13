@@ -13,9 +13,9 @@ const {
 let passed = 0;
 let failed = 0;
 
-function test(name, testFunction) {
+async function test(name, testFunction) {
   try {
-    testFunction();
+    await testFunction();
     console.log(`PASS ${name}`);
     passed += 1;
   } catch (error) {
@@ -60,7 +60,7 @@ function createPipeline(tracker = {}) {
     },
 
     narrator: {
-      narrate(request) {
+      async narrate(request) {
         tracker.request = request;
 
         return Object.freeze({
@@ -89,193 +89,229 @@ function createWorld() {
   };
 }
 
-console.log("================================");
-console.log("PRESENTATION PIPELINE TESTS");
-console.log("================================");
-console.log("");
+async function runTests() {
+  console.log("================================");
+  console.log("PRESENTATION PIPELINE TESTS");
+  console.log("================================");
+  console.log("");
 
-test("Builds and narrates a presentation request", () => {
-  const tracker = {};
-  const pipeline = createPipeline(tracker);
+  await test(
+    "Builds and narrates a presentation request",
+    async () => {
+      const tracker = {};
+      const pipeline = createPipeline(tracker);
 
-  const result = pipeline.present({
-    player: createPlayer(),
-    world: createWorld(),
-    playerInput: "I look around."
-  });
+      const result = await pipeline.present({
+        player: createPlayer(),
+        world: createWorld(),
+        playerInput: "I look around."
+      });
 
-  assert.strictEqual(
-    result.narration,
-    "The alley glistens in the rain."
-  );
-  assert.strictEqual(
-    tracker.request instanceof NarrationRequest,
-    true
-  );
-});
-
-test("Passes engine state to the AI context builder", () => {
-  const tracker = {};
-  const pipeline = createPipeline(tracker);
-  const player = createPlayer();
-  const world = createWorld();
-  const eventHistory = {
-    getRecent() {
-      return [];
+      assert.strictEqual(
+        result.narration,
+        "The alley glistens in the rain."
+      );
+      assert.strictEqual(
+        tracker.request instanceof NarrationRequest,
+        true
+      );
     }
-  };
-
-  pipeline.present({
-    player,
-    world,
-    playerInput: "I look around.",
-    eventHistory,
-    recentEventLimit: 5
-  });
-
-  assert.strictEqual(
-    tracker.aiOptions.player,
-    player
   );
-  assert.strictEqual(
-    tracker.aiOptions.world,
-    world
-  );
-  assert.strictEqual(
-    tracker.aiOptions.eventHistory,
-    eventHistory
-  );
-  assert.strictEqual(
-    tracker.aiOptions.recentEventLimit,
-    5
-  );
-});
 
-test("Passes AI context to the narrative builder", () => {
-  const tracker = {};
-  const pipeline = createPipeline(tracker);
+  await test(
+    "Passes engine state to the AI context builder",
+    async () => {
+      const tracker = {};
+      const pipeline = createPipeline(tracker);
+      const player = createPlayer();
+      const world = createWorld();
+      const eventHistory = {
+        getRecent() {
+          return [];
+        }
+      };
 
-  pipeline.present({
-    player: createPlayer(),
-    world: createWorld(),
-    playerInput: "I look around."
-  });
+      await pipeline.present({
+        player,
+        world,
+        playerInput: "I look around.",
+        eventHistory,
+        recentEventLimit: 5
+      });
 
-  assert.strictEqual(
-    tracker.aiContext.location.name,
-    "Back Alley"
-  );
-});
-
-test("Creates the requested narration mode", () => {
-  const tracker = {};
-  const pipeline = createPipeline(tracker);
-
-  const result = pipeline.present({
-    player: createPlayer(),
-    world: createWorld(),
-    playerInput: "Describe the alley.",
-    mode: "describe_location"
-  });
-
-  assert.strictEqual(
-    tracker.request.mode,
-    "describe_location"
-  );
-  assert.strictEqual(
-    result.mode,
-    "describe_location"
-  );
-});
-
-test("Passes narration instructions", () => {
-  const tracker = {};
-  const pipeline = createPipeline(tracker);
-
-  pipeline.present({
-    player: createPlayer(),
-    world: createWorld(),
-    playerInput: "I look around.",
-    instructions: {
-      preservePlayerAgency: true
+      assert.strictEqual(
+        tracker.aiOptions.player,
+        player
+      );
+      assert.strictEqual(
+        tracker.aiOptions.world,
+        world
+      );
+      assert.strictEqual(
+        tracker.aiOptions.eventHistory,
+        eventHistory
+      );
+      assert.strictEqual(
+        tracker.aiOptions.recentEventLimit,
+        5
+      );
     }
-  });
-
-  assert.strictEqual(
-    tracker.request.instructions.preservePlayerAgency,
-    true
   );
-});
 
-test("Returns the narrator result unchanged", () => {
-  const tracker = {};
-  const pipeline = createPipeline(tracker);
+  await test(
+    "Passes AI context to the narrative builder",
+    async () => {
+      const tracker = {};
+      const pipeline = createPipeline(tracker);
 
-  const result = pipeline.present({
-    player: createPlayer(),
-    world: createWorld(),
-    playerInput: "I look around."
-  });
+      await pipeline.present({
+        player: createPlayer(),
+        world: createWorld(),
+        playerInput: "I look around."
+      });
 
-  assert.deepStrictEqual(result, {
-    narration: "The alley glistens in the rain.",
-    mode: "narrate_action",
-    source: "test",
-    proposedAction: null
-  });
-});
-
-test("Rejects an invalid AI context builder", () => {
-  assert.throws(
-    () => new PresentationPipeline({
-      aiContextBuilder: {},
-      narrativeContextBuilder: {
-        build() {}
-      },
-      narrator: {
-        narrate() {}
-      }
-    }),
-    /aiContextBuilder must provide a build function/
+      assert.strictEqual(
+        tracker.aiContext.location.name,
+        "Back Alley"
+      );
+    }
   );
-});
 
-test("Rejects an invalid narrative context builder", () => {
-  assert.throws(
-    () => new PresentationPipeline({
-      aiContextBuilder: {
-        build() {}
-      },
-      narrativeContextBuilder: {},
-      narrator: {
-        narrate() {}
-      }
-    }),
-    /narrativeContextBuilder must provide a build function/
+  await test(
+    "Creates the requested narration mode",
+    async () => {
+      const tracker = {};
+      const pipeline = createPipeline(tracker);
+
+      const result = await pipeline.present({
+        player: createPlayer(),
+        world: createWorld(),
+        playerInput: "Describe the alley.",
+        mode: "describe_location"
+      });
+
+      assert.strictEqual(
+        tracker.request.mode,
+        "describe_location"
+      );
+      assert.strictEqual(
+        result.mode,
+        "describe_location"
+      );
+    }
   );
-});
 
-test("Rejects an invalid narrator", () => {
-  assert.throws(
-    () => new PresentationPipeline({
-      aiContextBuilder: {
-        build() {}
-      },
-      narrativeContextBuilder: {
-        build() {}
-      },
-      narrator: {}
-    }),
-    /narrator must provide a narrate function/
+  await test(
+    "Passes narration instructions",
+    async () => {
+      const tracker = {};
+      const pipeline = createPipeline(tracker);
+
+      await pipeline.present({
+        player: createPlayer(),
+        world: createWorld(),
+        playerInput: "I look around.",
+        instructions: {
+          preservePlayerAgency: true
+        }
+      });
+
+      assert.strictEqual(
+        tracker.request.instructions
+          .preservePlayerAgency,
+        true
+      );
+    }
   );
-});
 
-console.log("");
-console.log("================================");
-console.log(`${passed} passed`);
-console.log(`${failed} failed`);
-console.log("================================");
+  await test(
+    "Returns the narrator result unchanged",
+    async () => {
+      const tracker = {};
+      const pipeline = createPipeline(tracker);
 
-if (failed > 0) {
-  process.exitCode = 1;
+      const result = await pipeline.present({
+        player: createPlayer(),
+        world: createWorld(),
+        playerInput: "I look around."
+      });
+
+      assert.deepStrictEqual(result, {
+        narration:
+          "The alley glistens in the rain.",
+        mode: "narrate_action",
+        source: "test",
+        proposedAction: null
+      });
+    }
+  );
+
+  await test(
+    "Rejects an invalid AI context builder",
+    () => {
+      assert.throws(
+        () => new PresentationPipeline({
+          aiContextBuilder: {},
+          narrativeContextBuilder: {
+            build() {}
+          },
+          narrator: {
+            narrate() {}
+          }
+        }),
+        /aiContextBuilder must provide a build function/
+      );
+    }
+  );
+
+  await test(
+    "Rejects an invalid narrative context builder",
+    () => {
+      assert.throws(
+        () => new PresentationPipeline({
+          aiContextBuilder: {
+            build() {}
+          },
+          narrativeContextBuilder: {},
+          narrator: {
+            narrate() {}
+          }
+        }),
+        /narrativeContextBuilder must provide a build function/
+      );
+    }
+  );
+
+  await test(
+    "Rejects an invalid narrator",
+    () => {
+      assert.throws(
+        () => new PresentationPipeline({
+          aiContextBuilder: {
+            build() {}
+          },
+          narrativeContextBuilder: {
+            build() {}
+          },
+          narrator: {}
+        }),
+        /narrator must provide a narrate function/
+      );
+    }
+  );
+
+  console.log("");
+  console.log("================================");
+  console.log(`${passed} passed`);
+  console.log(`${failed} failed`);
+  console.log("================================");
+
+  if (failed > 0) {
+    process.exitCode = 1;
+  }
 }
+
+runTests().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

@@ -11,9 +11,9 @@ const {
 let passed = 0;
 let failed = 0;
 
-function test(name, testFunction) {
+async function test(name, testFunction) {
   try {
-    testFunction();
+    await testFunction();
     console.log(`PASS ${name}`);
     passed += 1;
   } catch (error) {
@@ -41,98 +41,122 @@ function createRequest(overrides = {}) {
   });
 }
 
-console.log("================================");
-console.log("MOCK NARRATOR TESTS");
-console.log("================================");
-console.log("");
+async function runTests() {
+  console.log("================================");
+  console.log("MOCK NARRATOR TESTS");
+  console.log("================================");
+  console.log("");
 
-test("Returns deterministic narration", () => {
-  const narrator = new MockNarrator();
+  await test(
+    "Returns deterministic narration",
+    async () => {
+      const narrator = new MockNarrator();
 
-  const result = narrator.narrate(
-    createRequest()
-  );
+      const result = await narrator.narrate(
+        createRequest()
+      );
 
-  assert.strictEqual(
-    result.narration,
-    "Runner acts in Back Alley. " +
-      "The weather is light rain."
-  );
-});
-
-test("Returns narration metadata", () => {
-  const narrator = new MockNarrator();
-
-  const result = narrator.narrate(
-    createRequest({
-      mode: "describe_action"
-    })
-  );
-
-  assert.deepStrictEqual(result, {
-    narration:
-      "Runner acts in Back Alley. " +
-      "The weather is light rain.",
-    mode: "describe_action",
-    source: "mock",
-    proposedAction: null
-  });
-});
-
-test("Returns an immutable result", () => {
-  const result = new MockNarrator().narrate(
-    createRequest()
-  );
-
-  assert.strictEqual(
-    Object.isFrozen(result),
-    true
-  );
-
-  assert.throws(
-    () => {
-      result.source = "changed";
-    },
-    TypeError
-  );
-});
-
-test("Uses safe fallbacks for missing context fields", () => {
-  const request = new NarrationRequest({
-    playerInput: "I wait.",
-    narrativeContext: {
-      world: {},
-      player: {},
-      location: {}
+      assert.strictEqual(
+        result.narration,
+        "Runner acts in Back Alley. " +
+          "The weather is light rain."
+      );
     }
-  });
-
-  const result = new MockNarrator().narrate(
-    request
   );
 
-  assert.strictEqual(
-    result.narration,
-    "The player acts in the current location. " +
-      "The weather is unknown weather."
+  await test(
+    "Returns narration metadata",
+    async () => {
+      const narrator = new MockNarrator();
+
+      const result = await narrator.narrate(
+        createRequest({
+          mode: "describe_action"
+        })
+      );
+
+      assert.deepStrictEqual(result, {
+        narration:
+          "Runner acts in Back Alley. " +
+          "The weather is light rain.",
+        mode: "describe_action",
+        source: "mock",
+        proposedAction: null
+      });
+    }
   );
-});
 
-test("Rejects values that are not narration requests", () => {
-  const narrator = new MockNarrator();
+  await test(
+    "Returns an immutable result",
+    async () => {
+      const result =
+        await new MockNarrator().narrate(
+          createRequest()
+        );
 
-  assert.throws(
-    () => narrator.narrate({}),
-    /requires a NarrationRequest/
+      assert.strictEqual(
+        Object.isFrozen(result),
+        true
+      );
+
+      assert.throws(
+        () => {
+          result.source = "changed";
+        },
+        TypeError
+      );
+    }
   );
-});
 
-console.log("");
-console.log("================================");
-console.log(`${passed} passed`);
-console.log(`${failed} failed`);
-console.log("================================");
+  await test(
+    "Uses safe fallbacks for missing context fields",
+    async () => {
+      const request = new NarrationRequest({
+        playerInput: "I wait.",
+        narrativeContext: {
+          world: {},
+          player: {},
+          location: {}
+        }
+      });
 
-if (failed > 0) {
-  process.exitCode = 1;
+      const result =
+        await new MockNarrator().narrate(
+          request
+        );
+
+      assert.strictEqual(
+        result.narration,
+        "The player acts in the current location. " +
+          "The weather is unknown weather."
+      );
+    }
+  );
+
+  await test(
+    "Rejects values that are not narration requests",
+    async () => {
+      const narrator = new MockNarrator();
+
+      await assert.rejects(
+        narrator.narrate({}),
+        /requires a NarrationRequest/
+      );
+    }
+  );
+
+  console.log("");
+  console.log("================================");
+  console.log(`${passed} passed`);
+  console.log(`${failed} failed`);
+  console.log("================================");
+
+  if (failed > 0) {
+    process.exitCode = 1;
+  }
 }
+
+runTests().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

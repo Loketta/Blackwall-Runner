@@ -47,7 +47,7 @@ class PresentationPipeline {
     this.#narrator = narrator;
   }
 
-  present({
+  async present({
     player,
     world,
     playerInput,
