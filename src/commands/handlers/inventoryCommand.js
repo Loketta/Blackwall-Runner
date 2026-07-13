@@ -1,17 +1,10 @@
 "use strict";
 
 const {
-  PresentationPipeline
-} = require("../../game/presentation/presentationPipeline");
-const {
-  AIContextBuilder
-} = require("../../game/ai/aiContextBuilder");
-const {
-  NarrativeContextBuilder
-} = require("../../game/ai/narrativeContextBuilder");
-const {
-  MockNarrator
-} = require("../../game/ai/mockNarrator");
+  createPresentationPipeline
+} = require(
+  "../../game/presentation/createPresentationPipeline"
+);
 const {
   performAction
 } = require("../../game/dispatcher/actionDispatcher");
@@ -23,14 +16,12 @@ const {
 } = require("../../game/events/eventServices");
 
 const defaultPresentationPipeline =
-  new PresentationPipeline({
-    aiContextBuilder: new AIContextBuilder(),
-    narrativeContextBuilder:
-      new NarrativeContextBuilder(),
-    narrator: new MockNarrator()
-  });
+  createPresentationPipeline();
 
-function runInventoryCommand(player, services = {}) {
+async function runInventoryCommand(
+  player,
+  services = {}
+) {
   const performActionService =
     services.performAction ?? performAction;
   const loadWorldService =
@@ -66,7 +57,7 @@ function runInventoryCommand(player, services = {}) {
     getEventServicesService();
 
   const narrationResult =
-    presentationPipeline.present({
+    await presentationPipeline.present({
       player,
       world,
       playerInput: "I check my inventory.",

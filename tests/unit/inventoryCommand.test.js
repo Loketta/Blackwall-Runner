@@ -2,9 +2,9 @@
 
 const assert = require("assert");
 const {
-  runLookCommand
+  runInventoryCommand
 } = require(
-  "../../src/commands/handlers/lookCommand"
+  "../../src/commands/handlers/inventoryCommand"
 );
 
 let passed = 0;
@@ -24,18 +24,25 @@ async function test(name, testFunction) {
 
 function createPlayer() {
   return {
-    id: "player_1",
+    id: "player_runner_1",
     name: "Runner",
     location: "back_alley_1"
   };
 }
 
-function createServices(tracker = {}) {
-  const location = {
-    id: "back_alley_1",
-    name: "Back Alley"
-  };
-
+function createServices(
+  tracker = {},
+  inventory = [
+    {
+      id: "item_medkit_1",
+      name: "Medkit"
+    },
+    {
+      id: "item_pistol_1",
+      name: "Heavy Pistol"
+    }
+  ]
+) {
   const world = {
     id: "world_1",
     weather: "light rain"
@@ -54,16 +61,11 @@ function createServices(tracker = {}) {
 
       return {
         success: true,
-        message: "You look around.",
+        message: "You check your inventory.",
         data: {
-          location
+          inventory
         }
       };
-    },
-
-    describeLocation(receivedLocation) {
-      tracker.describedLocation =
-        receivedLocation;
     },
 
     loadWorld() {
@@ -81,13 +83,11 @@ function createServices(tracker = {}) {
 
     presentationPipeline: {
       async present(options) {
-        tracker.presentationOptions =
-          options;
+        tracker.presentationOptions = options;
 
         return {
           narration:
-            "Runner acts in Back Alley. " +
-            "The weather is light rain."
+            "Runner reviews their carried equipment."
         };
       }
     },
@@ -101,26 +101,26 @@ function createServices(tracker = {}) {
     },
 
     expected: {
-      location,
       world,
-      eventHistory
+      eventHistory,
+      inventory
     }
   };
 }
 
 async function runTests() {
   console.log("================================");
-  console.log("LOOK COMMAND TESTS");
+  console.log("INVENTORY COMMAND TESTS");
   console.log("================================");
   console.log("");
 
   await test(
-    "Performs the look action",
+    "Performs the inventory action",
     async () => {
       const tracker = {};
       const player = createPlayer();
 
-      await runLookCommand(
+      await runInventoryCommand(
         player,
         createServices(tracker)
       );
@@ -129,29 +129,53 @@ async function runTests() {
         tracker.actionPlayer,
         player
       );
+
       assert.deepStrictEqual(
         tracker.action,
         {
-          type: "look"
+          type: "inventory"
         }
       );
     }
   );
 
   await test(
-    "Preserves the detailed location description",
+    "Prints inventory contents",
     async () => {
       const tracker = {};
-      const services = createServices(tracker);
 
-      await runLookCommand(
+      await runInventoryCommand(
         createPlayer(),
-        services
+        createServices(tracker)
       );
 
-      assert.strictEqual(
-        tracker.describedLocation,
-        services.expected.location
+      assert.deepStrictEqual(
+        tracker.logMessages.slice(0, 3),
+        [
+          "=== INVENTORY ===",
+          "- Medkit",
+          "- Heavy Pistol"
+        ]
+      );
+    }
+  );
+
+  await test(
+    "Prints an empty inventory",
+    async () => {
+      const tracker = {};
+
+      await runInventoryCommand(
+        createPlayer(),
+        createServices(tracker, [])
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages.slice(0, 2),
+        [
+          "=== INVENTORY ===",
+          "Your inventory is empty."
+        ]
       );
     }
   );
@@ -162,7 +186,7 @@ async function runTests() {
       const tracker = {};
       const services = createServices(tracker);
 
-      await runLookCommand(
+      await runInventoryCommand(
         createPlayer(),
         services
       );
@@ -171,14 +195,17 @@ async function runTests() {
         tracker.worldWasLoaded,
         true
       );
+
       assert.strictEqual(
         tracker.eventServicesWereLoaded,
         true
       );
+
       assert.strictEqual(
         tracker.presentationOptions.world,
         services.expected.world
       );
+
       assert.strictEqual(
         tracker.presentationOptions.eventHistory,
         services.expected.eventHistory
@@ -187,12 +214,12 @@ async function runTests() {
   );
 
   await test(
-    "Builds a location narration request",
+    "Builds an inventory narration request",
     async () => {
       const tracker = {};
       const player = createPlayer();
 
-      await runLookCommand(
+      await runInventoryCommand(
         player,
         createServices(tracker)
       );
@@ -201,14 +228,17 @@ async function runTests() {
         tracker.presentationOptions.player,
         player
       );
+
       assert.strictEqual(
         tracker.presentationOptions.playerInput,
-        "I look around."
+        "I check my inventory."
       );
+
       assert.strictEqual(
         tracker.presentationOptions.mode,
-        "describe_location"
+        "narrate_action"
       );
+
       assert.deepStrictEqual(
         tracker.presentationOptions.instructions,
         {
@@ -220,21 +250,20 @@ async function runTests() {
   );
 
   await test(
-    "Prints narration after the existing output",
+    "Prints narration after inventory output",
     async () => {
       const tracker = {};
 
-      await runLookCommand(
+      await runInventoryCommand(
         createPlayer(),
         createServices(tracker)
       );
 
       assert.deepStrictEqual(
-        tracker.logMessages,
+        tracker.logMessages.slice(-2),
         [
           "",
-          "Runner acts in Back Alley. " +
-            "The weather is light rain."
+          "Runner reviews their carried equipment."
         ]
       );
     }
@@ -247,23 +276,18 @@ async function runTests() {
         logMessages: []
       };
 
-      await runLookCommand(
+      await runInventoryCommand(
         createPlayer(),
         {
           performAction() {
             return {
               success: true,
-              message: "You look around.",
+              message: "You check your inventory.",
               data: {
-                location: {
-                  id: "back_alley_1",
-                  name: "Back Alley"
-                }
+                inventory: []
               }
             };
           },
-
-          describeLocation() {},
 
           loadWorld() {
             return {
@@ -284,7 +308,7 @@ async function runTests() {
 
               return {
                 narration:
-                  "Asynchronous narration."
+                  "Asynchronous inventory narration."
               };
             }
           },
@@ -296,33 +320,38 @@ async function runTests() {
       );
 
       assert.deepStrictEqual(
-        tracker.logMessages,
+        tracker.logMessages.slice(-2),
         [
           "",
-          "Asynchronous narration."
+          "Asynchronous inventory narration."
         ]
       );
     }
   );
 
   await test(
-    "Prints action failures without presenting",
+    "Prints failures without presenting",
     async () => {
       const tracker = {
         presentationWasCalled: false,
+        worldWasLoaded: false,
         logMessages: []
       };
 
-      await runLookCommand(
+      await runInventoryCommand(
         createPlayer(),
         {
           performAction() {
             return {
               success: false,
-              message:
-                "You cannot look around.",
+              message: "Inventory is unavailable.",
               data: {}
             };
+          },
+
+          loadWorld() {
+            tracker.worldWasLoaded = true;
+            return {};
           },
 
           presentationPipeline: {
@@ -339,12 +368,18 @@ async function runTests() {
       );
 
       assert.strictEqual(
+        tracker.worldWasLoaded,
+        false
+      );
+
+      assert.strictEqual(
         tracker.presentationWasCalled,
         false
       );
+
       assert.deepStrictEqual(
         tracker.logMessages,
-        ["You cannot look around."]
+        ["Inventory is unavailable."]
       );
     }
   );

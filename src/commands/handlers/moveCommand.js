@@ -4,17 +4,10 @@ const {
   describeLocation
 } = require("../../game/presentation/locationDescriber");
 const {
-  PresentationPipeline
-} = require("../../game/presentation/presentationPipeline");
-const {
-  AIContextBuilder
-} = require("../../game/ai/aiContextBuilder");
-const {
-  NarrativeContextBuilder
-} = require("../../game/ai/narrativeContextBuilder");
-const {
-  MockNarrator
-} = require("../../game/ai/mockNarrator");
+  createPresentationPipeline
+} = require(
+  "../../game/presentation/createPresentationPipeline"
+);
 const {
   performAction
 } = require("../../game/dispatcher/actionDispatcher");
@@ -26,14 +19,9 @@ const {
 } = require("../../game/events/eventServices");
 
 const defaultPresentationPipeline =
-  new PresentationPipeline({
-    aiContextBuilder: new AIContextBuilder(),
-    narrativeContextBuilder:
-      new NarrativeContextBuilder(),
-    narrator: new MockNarrator()
-  });
+  createPresentationPipeline();
 
-function runMoveCommand(
+async function runMoveCommand(
   player,
   args,
   services = {}
@@ -76,7 +64,7 @@ function runMoveCommand(
   const world = loadWorldService();
 
   const narrationResult =
-    presentationPipeline.present({
+    await presentationPipeline.present({
       player,
       world,
       playerInput:

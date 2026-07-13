@@ -10,9 +10,9 @@ const {
 let passed = 0;
 let failed = 0;
 
-function test(name, testFunction) {
+async function test(name, testFunction) {
   try {
-    testFunction();
+    await testFunction();
     console.log(`PASS ${name}`);
     passed += 1;
   } catch (error) {
@@ -87,7 +87,7 @@ function createServices(tracker = {}) {
     },
 
     presentationPipeline: {
-      present(options) {
+      async present(options) {
         tracker.presentationOptions = options;
 
         return {
@@ -112,212 +112,325 @@ function createServices(tracker = {}) {
   };
 }
 
-console.log("================================");
-console.log("OPEN COMMAND TESTS");
-console.log("================================");
-console.log("");
+async function runTests() {
+  console.log("================================");
+  console.log("OPEN COMMAND TESTS");
+  console.log("================================");
+  console.log("");
 
-test("Requires container input", () => {
-  const tracker = {};
+  await test(
+    "Requires container input",
+    async () => {
+      const tracker = {};
 
-  runOpenCommand(
-    createPlayer(),
-    [],
-    createServices(tracker)
-  );
+      await runOpenCommand(
+        createPlayer(),
+        [],
+        createServices(tracker)
+      );
 
-  assert.deepStrictEqual(
-    tracker.logMessages,
-    ["What do you want to open?"]
-  );
-  assert.strictEqual(
-    tracker.action,
-    undefined
-  );
-});
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        ["What do you want to open?"]
+      );
 
-test("Performs the open action", () => {
-  const tracker = {};
-  const player = createPlayer();
-
-  runOpenCommand(
-    player,
-    ["Storage", "Crate"],
-    createServices(tracker)
-  );
-
-  assert.strictEqual(
-    tracker.actionPlayer,
-    player
-  );
-  assert.deepStrictEqual(
-    tracker.action,
-    {
-      type: "open",
-      containerInput: "Storage Crate"
+      assert.strictEqual(
+        tracker.action,
+        undefined
+      );
     }
   );
-});
 
-test("Preserves container contents output", () => {
-  const tracker = {};
+  await test(
+    "Performs the open action",
+    async () => {
+      const tracker = {};
+      const player = createPlayer();
 
-  runOpenCommand(
-    createPlayer(),
-    ["Storage", "Crate"],
-    createServices(tracker)
-  );
+      await runOpenCommand(
+        player,
+        ["Storage", "Crate"],
+        createServices(tracker)
+      );
 
-  assert.deepStrictEqual(
-    tracker.logMessages.slice(0, 5),
-    [
-      "You open Storage Crate.",
-      "",
-      "Contents:",
-      "- Medkit",
-      "- Unknown Item (item_unknown)"
-    ]
-  );
-});
+      assert.strictEqual(
+        tracker.actionPlayer,
+        player
+      );
 
-test("Preserves empty container output", () => {
-  const tracker = {};
-  const services = createServices(tracker);
-
-  services.performAction = function () {
-    return {
-      success: true,
-      message: "You open Empty Box.",
-      data: {
-        container: {
-          id: "container_empty",
-          name: "Empty Box",
-          items: []
+      assert.deepStrictEqual(
+        tracker.action,
+        {
+          type: "open",
+          containerInput: "Storage Crate"
         }
-      }
-    };
-  };
-
-  runOpenCommand(
-    createPlayer(),
-    ["Empty", "Box"],
-    services
+      );
+    }
   );
 
-  assert.deepStrictEqual(
-    tracker.logMessages.slice(0, 2),
-    [
-      "You open Empty Box.",
-      "It is empty."
-    ]
-  );
-});
+  await test(
+    "Preserves container contents output",
+    async () => {
+      const tracker = {};
 
-test("Builds an open narration request", () => {
-  const tracker = {};
-  const player = createPlayer();
-  const services = createServices(tracker);
+      await runOpenCommand(
+        createPlayer(),
+        ["Storage", "Crate"],
+        createServices(tracker)
+      );
 
-  runOpenCommand(
-    player,
-    ["Storage", "Crate"],
-    services
-  );
-
-  assert.strictEqual(
-    tracker.presentationOptions.player,
-    player
-  );
-  assert.strictEqual(
-    tracker.presentationOptions.world,
-    services.expected.world
-  );
-  assert.strictEqual(
-    tracker.presentationOptions.eventHistory,
-    services.expected.eventHistory
-  );
-  assert.strictEqual(
-    tracker.presentationOptions.playerInput,
-    "I open Storage Crate."
-  );
-  assert.strictEqual(
-    tracker.presentationOptions.mode,
-    "narrate_action"
-  );
-});
-
-test("Prints narration after contents", () => {
-  const tracker = {};
-
-  runOpenCommand(
-    createPlayer(),
-    ["Storage", "Crate"],
-    createServices(tracker)
+      assert.deepStrictEqual(
+        tracker.logMessages.slice(0, 5),
+        [
+          "You open Storage Crate.",
+          "",
+          "Contents:",
+          "- Medkit",
+          "- Unknown Item (item_unknown)"
+        ]
+      );
+    }
   );
 
-  assert.deepStrictEqual(
-    tracker.logMessages.slice(-2),
-    [
-      "",
-      "The crate opens with a metallic scrape."
-    ]
-  );
-});
+  await test(
+    "Preserves empty container output",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
 
-test("Does not present failed open actions", () => {
-  const tracker = {
-    worldWasLoaded: false,
-    presentationWasCalled: false,
-    logMessages: []
-  };
-
-  runOpenCommand(
-    createPlayer(),
-    ["Unknown"],
-    {
-      performAction() {
+      services.performAction = function () {
         return {
-          success: false,
-          message:
-            "I do not recognise that container.",
-          data: {}
+          success: true,
+          message: "You open Empty Box.",
+          data: {
+            container: {
+              id: "container_empty",
+              name: "Empty Box",
+              items: []
+            }
+          }
         };
-      },
-      loadWorld() {
-        tracker.worldWasLoaded = true;
-        return {};
-      },
-      presentationPipeline: {
-        present() {
-          tracker.presentationWasCalled = true;
-        }
-      },
-      log(message) {
-        tracker.logMessages.push(message);
-      }
+      };
+
+      await runOpenCommand(
+        createPlayer(),
+        ["Empty", "Box"],
+        services
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages.slice(0, 2),
+        [
+          "You open Empty Box.",
+          "It is empty."
+        ]
+      );
     }
   );
 
-  assert.strictEqual(
-    tracker.worldWasLoaded,
-    false
-  );
-  assert.strictEqual(
-    tracker.presentationWasCalled,
-    false
-  );
-  assert.deepStrictEqual(
-    tracker.logMessages,
-    ["I do not recognise that container."]
-  );
-});
+  await test(
+    "Builds an open narration request",
+    async () => {
+      const tracker = {};
+      const player = createPlayer();
+      const services = createServices(tracker);
 
-console.log("");
-console.log("================================");
-console.log(`${passed} passed`);
-console.log(`${failed} failed`);
-console.log("================================");
+      await runOpenCommand(
+        player,
+        ["Storage", "Crate"],
+        services
+      );
 
-if (failed > 0) {
-  process.exitCode = 1;
+      assert.strictEqual(
+        tracker.presentationOptions.player,
+        player
+      );
+
+      assert.strictEqual(
+        tracker.presentationOptions.world,
+        services.expected.world
+      );
+
+      assert.strictEqual(
+        tracker.presentationOptions.eventHistory,
+        services.expected.eventHistory
+      );
+
+      assert.strictEqual(
+        tracker.presentationOptions.playerInput,
+        "I open Storage Crate."
+      );
+
+      assert.strictEqual(
+        tracker.presentationOptions.mode,
+        "narrate_action"
+      );
+
+      assert.deepStrictEqual(
+        tracker.presentationOptions.instructions,
+        {
+          preservePlayerAgency: true,
+          useOnlyProvidedFacts: true
+        }
+      );
+    }
+  );
+
+  await test(
+    "Prints narration after contents",
+    async () => {
+      const tracker = {};
+
+      await runOpenCommand(
+        createPlayer(),
+        ["Storage", "Crate"],
+        createServices(tracker)
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages.slice(-2),
+        [
+          "",
+          "The crate opens with a metallic scrape."
+        ]
+      );
+    }
+  );
+
+  await test(
+    "Awaits asynchronous narration",
+    async () => {
+      const tracker = {
+        logMessages: []
+      };
+
+      await runOpenCommand(
+        createPlayer(),
+        ["Storage", "Crate"],
+        {
+          performAction() {
+            return {
+              success: true,
+              message: "You open Storage Crate.",
+              data: {
+                container: {
+                  id: "container_crate_1",
+                  name: "Storage Crate",
+                  items: []
+                }
+              }
+            };
+          },
+
+          loadWorld() {
+            return {
+              id: "world_1",
+              weather: "light rain"
+            };
+          },
+
+          getEventServices() {
+            return {
+              eventHistory: null
+            };
+          },
+
+          presentationPipeline: {
+            async present() {
+              await Promise.resolve();
+
+              return {
+                narration:
+                  "Asynchronous open narration."
+              };
+            }
+          },
+
+          log(message) {
+            tracker.logMessages.push(message);
+          }
+        }
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages.slice(-2),
+        [
+          "",
+          "Asynchronous open narration."
+        ]
+      );
+    }
+  );
+
+  await test(
+    "Does not present failed open actions",
+    async () => {
+      const tracker = {
+        worldWasLoaded: false,
+        presentationWasCalled: false,
+        logMessages: []
+      };
+
+      await runOpenCommand(
+        createPlayer(),
+        ["Unknown"],
+        {
+          performAction() {
+            return {
+              success: false,
+              message:
+                "I do not recognise that container.",
+              data: {}
+            };
+          },
+
+          loadWorld() {
+            tracker.worldWasLoaded = true;
+            return {};
+          },
+
+          presentationPipeline: {
+            async present() {
+              tracker.presentationWasCalled =
+                true;
+            }
+          },
+
+          log(message) {
+            tracker.logMessages.push(message);
+          }
+        }
+      );
+
+      assert.strictEqual(
+        tracker.worldWasLoaded,
+        false
+      );
+
+      assert.strictEqual(
+        tracker.presentationWasCalled,
+        false
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        ["I do not recognise that container."]
+      );
+    }
+  );
+
+  console.log("");
+  console.log("================================");
+  console.log(`${passed} passed`);
+  console.log(`${failed} failed`);
+  console.log("================================");
+
+  if (failed > 0) {
+    process.exitCode = 1;
+  }
 }
+
+runTests().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

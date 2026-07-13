@@ -4,17 +4,10 @@ const {
   describeLocation
 } = require("../../game/presentation/locationDescriber");
 const {
-  PresentationPipeline
-} = require("../../game/presentation/presentationPipeline");
-const {
-  AIContextBuilder
-} = require("../../game/ai/aiContextBuilder");
-const {
-  NarrativeContextBuilder
-} = require("../../game/ai/narrativeContextBuilder");
-const {
-  MockNarrator
-} = require("../../game/ai/mockNarrator");
+  createPresentationPipeline
+} = require(
+  "../../game/presentation/createPresentationPipeline"
+);
 const {
   performAction
 } = require("../../game/dispatcher/actionDispatcher");
@@ -26,14 +19,12 @@ const {
 } = require("../../game/events/eventServices");
 
 const defaultPresentationPipeline =
-  new PresentationPipeline({
-    aiContextBuilder: new AIContextBuilder(),
-    narrativeContextBuilder:
-      new NarrativeContextBuilder(),
-    narrator: new MockNarrator()
-  });
+  createPresentationPipeline();
 
-function runLookCommand(player, services = {}) {
+async function runLookCommand(
+  player,
+  services = {}
+) {
   const performActionService =
     services.performAction ?? performAction;
   const describeLocationService =
@@ -63,7 +54,7 @@ function runLookCommand(player, services = {}) {
     getEventServicesService();
 
   const narrationResult =
-    presentationPipeline.present({
+    await presentationPipeline.present({
       player,
       world,
       playerInput: "I look around.",

@@ -1,17 +1,10 @@
 "use strict";
 
 const {
-  PresentationPipeline
-} = require("../../game/presentation/presentationPipeline");
-const {
-  AIContextBuilder
-} = require("../../game/ai/aiContextBuilder");
-const {
-  NarrativeContextBuilder
-} = require("../../game/ai/narrativeContextBuilder");
-const {
-  MockNarrator
-} = require("../../game/ai/mockNarrator");
+  createPresentationPipeline
+} = require(
+  "../../game/presentation/createPresentationPipeline"
+);
 const {
   performAction
 } = require("../../game/dispatcher/actionDispatcher");
@@ -20,14 +13,12 @@ const {
 } = require("../../game/events/eventServices");
 
 const defaultPresentationPipeline =
-  new PresentationPipeline({
-    aiContextBuilder: new AIContextBuilder(),
-    narrativeContextBuilder:
-      new NarrativeContextBuilder(),
-    narrator: new MockNarrator()
-  });
+  createPresentationPipeline();
 
-function runStatusCommand(player, services = {}) {
+async function runStatusCommand(
+  player,
+  services = {}
+) {
   const performActionService =
     services.performAction ?? performAction;
   const getEventServicesService =
@@ -67,7 +58,7 @@ function runStatusCommand(player, services = {}) {
     getEventServicesService();
 
   const narrationResult =
-    presentationPipeline.present({
+    await presentationPipeline.present({
       player,
       world,
       playerInput: "I check my status.",
