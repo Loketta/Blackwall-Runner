@@ -1,15 +1,27 @@
 "use strict";
 
 const assert = require("assert");
+
 const {
   NarrationRequest
-} = require("../../src/game/ai/narrationRequest");
+} = require(
+  "../../src/game/ai/narrationRequest"
+);
 const {
   MockNarrator
-} = require("../../src/game/ai/mockNarrator");
+} = require(
+  "../../src/game/ai/mockNarrator"
+);
 const {
   OpenAINarrator
-} = require("../../src/game/ai/openAINarrator");
+} = require(
+  "../../src/game/ai/openAINarrator"
+);
+const {
+  NarrationCache
+} = require(
+  "../../src/game/presentation/narrationCache"
+);
 const {
   createNarrator,
   createPresentationPipeline
@@ -58,7 +70,12 @@ function createNarrativeContextBuilder() {
         world: {
           weather: aiContext.world.weather
         },
-        location: aiContext.location
+        location: aiContext.location,
+        visibleCharacters: [],
+        visibleItems: [],
+        visibleObjects: [],
+        visibleShops: [],
+        recentEvents: []
       });
     }
   };
@@ -101,7 +118,7 @@ async function runTests() {
     "Normalises the narrator provider name",
     () => {
       const narrator = createNarrator({
-        provider: "  MOCK  "
+        provider: " MOCK "
       });
 
       assert.strictEqual(
@@ -198,7 +215,8 @@ async function runTests() {
           receivedRequest = request;
 
           return Object.freeze({
-            narration: "Injected narration.",
+            narration:
+              "Injected narration.",
             mode: request.mode,
             source: "injected",
             proposedAction: null
@@ -208,7 +226,8 @@ async function runTests() {
 
       const pipeline =
         createPresentationPipeline({
-          provider: "unsupported-but-unused",
+          provider:
+            "unsupported-but-unused",
           aiContextBuilder:
             createAIContextBuilder(),
           narrativeContextBuilder:
@@ -223,18 +242,166 @@ async function runTests() {
       });
 
       assert.strictEqual(
-        receivedRequest instanceof NarrationRequest,
+        receivedRequest instanceof
+          NarrationRequest,
         true
       );
-
       assert.strictEqual(
         result.narration,
         "Injected narration."
       );
-
       assert.strictEqual(
         result.source,
         "injected"
+      );
+    }
+  );
+
+  await test(
+    "Caches repeated location narration",
+    async () => {
+      let narratorCalls = 0;
+      const cache = new NarrationCache();
+
+      const narrator = {
+        async narrate(request) {
+          narratorCalls += 1;
+
+          return Object.freeze({
+            narration:
+              "Rain glistens across the alley.",
+            mode: request.mode,
+            source: "injected",
+            proposedAction: null
+          });
+        }
+      };
+
+      const pipeline =
+        createPresentationPipeline({
+          narrator,
+          narrationCache: cache,
+          aiContextBuilder:
+            createAIContextBuilder(),
+          narrativeContextBuilder:
+            createNarrativeContextBuilder(),
+          promptVersion: "scene-v1",
+          model: "test-model",
+          clock: () =>
+            new Date(
+              "2045-01-02T03:05:00.000Z"
+            )
+        });
+
+      const request = {
+        player: createPlayer(),
+        world: createWorld(),
+        playerInput: "I look around.",
+        mode: "describe_location"
+      };
+
+      const firstResult =
+        await pipeline.present(request);
+      const secondResult =
+        await pipeline.present(request);
+
+      assert.strictEqual(
+        narratorCalls,
+        1
+      );
+      assert.strictEqual(
+        cache.size(),
+        1
+      );
+      assert.strictEqual(
+        secondResult.narration,
+        firstResult.narration
+      );
+    }
+  );
+
+  await test(
+    "Does not cache repeated action narration",
+    async () => {
+      let narratorCalls = 0;
+      const cache = new NarrationCache();
+
+      const narrator = {
+        async narrate(request) {
+          narratorCalls += 1;
+
+          return Object.freeze({
+            narration: "Action narration.",
+            mode: request.mode,
+            source: "injected",
+            proposedAction: null
+          });
+        }
+      };
+
+      const pipeline =
+        createPresentationPipeline({
+          narrator,
+          narrationCache: cache,
+          aiContextBuilder:
+            createAIContextBuilder(),
+          narrativeContextBuilder:
+            createNarrativeContextBuilder()
+        });
+
+      const request = {
+        player: createPlayer(),
+        world: createWorld(),
+        playerInput: "I open the crate.",
+        mode: "narrate_action"
+      };
+
+      await pipeline.present(request);
+      await pipeline.present(request);
+
+      assert.strictEqual(
+        narratorCalls,
+        2
+      );
+      assert.strictEqual(
+        cache.size(),
+        0
+      );
+    }
+  );
+
+  await test(
+    "Uses runtime configuration for mock composition",
+    async () => {
+      let configLoads = 0;
+
+      const pipeline =
+        createPresentationPipeline({
+          configLoader() {
+            configLoads += 1;
+
+            return Object.freeze({
+              aiProvider: "mock",
+              openAIApiKey: null,
+              openAIModel: null
+            });
+          },
+          aiContextBuilder:
+            createAIContextBuilder(),
+          narrativeContextBuilder:
+            createNarrativeContextBuilder()
+        });
+
+      const result = await pipeline.present({
+        player: createPlayer(),
+        world: createWorld(),
+        playerInput: "I look around."
+      });
+
+      assert.strictEqual(configLoads, 1);
+      assert.strictEqual(
+        result.source,
+        "mock"
       );
     }
   );
