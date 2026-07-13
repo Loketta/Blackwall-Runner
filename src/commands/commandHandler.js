@@ -1,15 +1,39 @@
-const { loadPlayer } = require("../game/managers/playerManager");
+"use strict";
 
-const { runStatusCommand } = require("./handlers/statusCommand");
-const { runLookCommand } = require("./handlers/lookCommand");
-const { runMoveCommand } = require("./handlers/moveCommand");
-const { runWaitCommand } = require("./handlers/waitCommand");
-const { runInventoryCommand } = require("./handlers/inventoryCommand");
-const { runTakeCommand } = require("./handlers/takeCommand");
-const { runDropCommand } = require("./handlers/dropCommand");
-const { runTalkCommand } = require("./handlers/talkCommand");
-const { runShopCommand } = require("./handlers/shopCommand");
-const { runOpenCommand } = require("./handlers/openCommand");
+const {
+  loadPlayer
+} = require("../game/managers/playerManager");
+
+const {
+  runStatusCommand
+} = require("./handlers/statusCommand");
+const {
+  runLookCommand
+} = require("./handlers/lookCommand");
+const {
+  runMoveCommand
+} = require("./handlers/moveCommand");
+const {
+  runWaitCommand
+} = require("./handlers/waitCommand");
+const {
+  runInventoryCommand
+} = require("./handlers/inventoryCommand");
+const {
+  runTakeCommand
+} = require("./handlers/takeCommand");
+const {
+  runDropCommand
+} = require("./handlers/dropCommand");
+const {
+  runTalkCommand
+} = require("./handlers/talkCommand");
+const {
+  runShopCommand
+} = require("./handlers/shopCommand");
+const {
+  runOpenCommand
+} = require("./handlers/openCommand");
 
 function showHelp() {
   console.log("Unknown command.");
@@ -28,56 +52,56 @@ function showHelp() {
   console.log("open <container>");
 }
 
-function handleCommand(command, args) {
+async function handleCommand(command, args) {
   const player = loadPlayer();
 
   if (command === "status") {
-    runStatusCommand(player);
+    await runStatusCommand(player);
     return;
   }
 
   if (command === "look") {
-    runLookCommand(player);
+    await runLookCommand(player);
     return;
   }
 
   if (command === "move" || command === "go") {
-    runMoveCommand(player, args);
+    await runMoveCommand(player, args);
     return;
   }
 
   if (command === "wait") {
-    runWaitCommand(player, args);
+    await runWaitCommand(player, args);
     return;
   }
 
   if (command === "inventory") {
-    runInventoryCommand(player);
+    await runInventoryCommand(player);
     return;
   }
 
   if (command === "take") {
-    runTakeCommand(player, args);
+    await runTakeCommand(player, args);
     return;
   }
 
   if (command === "drop") {
-    runDropCommand(player, args);
+    await runDropCommand(player, args);
     return;
   }
 
   if (command === "talk") {
-    runTalkCommand(player, args);
+    await runTalkCommand(player, args);
     return;
   }
 
   if (command === "shop") {
-    runShopCommand(player);
+    await runShopCommand(player);
     return;
   }
 
   if (command === "open") {
-    runOpenCommand(player, args);
+    await runOpenCommand(player, args);
     return;
   }
 
