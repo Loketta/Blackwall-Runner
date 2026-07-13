@@ -1,18 +1,85 @@
-const { describeLocation } = require("../../game/presentation/locationDescriber");
-const { performAction } = require("../../game/dispatcher/actionDispatcher");
+"use strict";
 
-function runLookCommand(player) {
-    const result = performAction(player, {
-        type: "look"
+const {
+  describeLocation
+} = require("../../game/presentation/locationDescriber");
+const {
+  PresentationPipeline
+} = require("../../game/presentation/presentationPipeline");
+const {
+  AIContextBuilder
+} = require("../../game/ai/aiContextBuilder");
+const {
+  NarrativeContextBuilder
+} = require("../../game/ai/narrativeContextBuilder");
+const {
+  MockNarrator
+} = require("../../game/ai/mockNarrator");
+const {
+  performAction
+} = require("../../game/dispatcher/actionDispatcher");
+const {
+  loadWorld
+} = require("../../game/managers/worldManager");
+const {
+  getEventServices
+} = require("../../game/events/eventServices");
+
+const defaultPresentationPipeline =
+  new PresentationPipeline({
+    aiContextBuilder: new AIContextBuilder(),
+    narrativeContextBuilder:
+      new NarrativeContextBuilder(),
+    narrator: new MockNarrator()
+  });
+
+function runLookCommand(player, services = {}) {
+  const performActionService =
+    services.performAction ?? performAction;
+  const describeLocationService =
+    services.describeLocation ?? describeLocation;
+  const loadWorldService =
+    services.loadWorld ?? loadWorld;
+  const getEventServicesService =
+    services.getEventServices ?? getEventServices;
+  const presentationPipeline =
+    services.presentationPipeline ??
+    defaultPresentationPipeline;
+  const log = services.log ?? console.log;
+
+  const result = performActionService(player, {
+    type: "look"
+  });
+
+  if (!result.success) {
+    log(result.message);
+    return;
+  }
+
+  describeLocationService(result.data.location);
+
+  const world = loadWorldService();
+  const eventServices =
+    getEventServicesService();
+
+  const narrationResult =
+    presentationPipeline.present({
+      player,
+      world,
+      playerInput: "I look around.",
+      eventHistory:
+        eventServices?.eventHistory ?? null,
+      mode: "describe_location",
+      instructions: {
+        preservePlayerAgency: true,
+        useOnlyProvidedFacts: true
+      }
     });
 
-    if (result.success) {
-        describeLocation(result.data.location);
-    } else {
-        console.log(result.message);
-    }
+  log("");
+  log(narrationResult.narration);
 }
 
 module.exports = {
-    runLookCommand
+  runLookCommand
 };
