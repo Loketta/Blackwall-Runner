@@ -1,81 +1,68 @@
 "use strict";
 
 const {
+  loadRuntimeConfig
+} = require("../../config/runtimeConfig");
+const {
   AIContextBuilder
 } = require("../ai/aiContextBuilder");
 const {
   NarrativeContextBuilder
 } = require("../ai/narrativeContextBuilder");
 const {
-  MockNarrator
-} = require("../ai/mockNarrator");
-const {
-  OpenAINarrator
-} = require("../ai/openAINarrator");
-const {
   PromptBuilder
 } = require("../ai/promptBuilder");
+const {
+  createNarrator
+} = require("../ai/createNarrator");
 const {
   PresentationPipeline
 } = require("./presentationPipeline");
 
-function normaliseProvider(provider) {
-  if (
-    typeof provider !== "string" ||
-    provider.trim() === ""
-  ) {
-    throw new TypeError(
-      "provider must be a non-empty string."
-    );
-  }
-
-  return provider.trim().toLowerCase();
-}
-
-function createNarrator({
-  provider = "mock",
-  client = null,
-  model = null,
-  promptBuilder = new PromptBuilder()
-} = {}) {
-  const normalisedProvider =
-    normaliseProvider(provider);
-
-  if (normalisedProvider === "mock") {
-    return new MockNarrator();
-  }
-
-  if (normalisedProvider === "openai") {
-    return new OpenAINarrator({
-      client,
-      promptBuilder,
-      model
-    });
-  }
-
-  throw new RangeError(
-    `Unsupported narrator provider: ${provider}`
-  );
-}
-
 function createPresentationPipeline({
-  provider = "mock",
+  provider = null,
+  apiKey = null,
   client = null,
   model = null,
   promptBuilder = new PromptBuilder(),
   aiContextBuilder = new AIContextBuilder(),
   narrativeContextBuilder =
     new NarrativeContextBuilder(),
-  narrator = null
+  narrator = null,
+  configLoader = loadRuntimeConfig,
+  clientFactory = undefined
 } = {}) {
-  const selectedNarrator =
-    narrator ??
-    createNarrator({
-      provider,
+  let selectedNarrator = narrator;
+
+  if (selectedNarrator === null) {
+    if (typeof configLoader !== "function") {
+      throw new TypeError(
+        "configLoader must be a function."
+      );
+    }
+
+    const config =
+      provider === null
+        ? configLoader()
+        : {
+            aiProvider: provider,
+            openAIApiKey: apiKey,
+            openAIModel: model
+          };
+
+    selectedNarrator = createNarrator({
+      provider: config.aiProvider,
+      apiKey:
+        apiKey ??
+        config.openAIApiKey,
       client,
-      model,
-      promptBuilder
+      model:
+        model ??
+        config.openAIModel,
+      promptBuilder,
+      clientFactory
     });
+  }
 
   return new PresentationPipeline({
     aiContextBuilder,
