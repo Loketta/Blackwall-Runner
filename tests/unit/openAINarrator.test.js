@@ -56,7 +56,12 @@ function createNarrator(tracker = {}) {
 
             return {
               output_text:
-                "  Rain glistens across the alley.  "
+                "  Rain glistens across the alley.  ",
+              usage: {
+                input_tokens: 11,
+                output_tokens: 7,
+                total_tokens: 18
+              }
             };
           }
         }
@@ -67,7 +72,13 @@ function createNarrator(tracker = {}) {
           return prompt;
         }
       },
-      model: "test-model"
+      model: "test-model",
+      clock: (() => {
+        const times = [1000, 1125];
+        let index = 0;
+
+        return () => times[index++];
+      })()
     }),
     prompt
   };
@@ -121,7 +132,13 @@ async function run() {
         "Rain glistens across the alley.",
       mode: "describe_location",
       source: "openai",
-      proposedAction: null
+      proposedAction: null,
+      usage: {
+        inputTokens: 11,
+        outputTokens: 7,
+        totalTokens: 18
+      },
+      latencyMs: 125
     });
   });
 

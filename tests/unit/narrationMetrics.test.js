@@ -39,7 +39,13 @@ test("Starts with zero metrics", () => {
       cached: 0,
       cacheHits: 0,
       cacheMisses: 0,
-      cacheHitRate: 0
+      cacheHitRate: 0,
+      apiRequests: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      totalApiLatencyMs: 0,
+      averageApiLatencyMs: 0
     }
   );
 });
@@ -57,7 +63,13 @@ test("Records generated narration", () => {
       cached: 0,
       cacheHits: 0,
       cacheMisses: 0,
-      cacheHitRate: 0
+      cacheHitRate: 0,
+      apiRequests: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      totalApiLatencyMs: 0,
+      averageApiLatencyMs: 0
     }
   );
 });
@@ -77,7 +89,13 @@ test("Records a generated cache miss", () => {
       cached: 0,
       cacheHits: 0,
       cacheMisses: 1,
-      cacheHitRate: 0
+      cacheHitRate: 0,
+      apiRequests: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      totalApiLatencyMs: 0,
+      averageApiLatencyMs: 0
     }
   );
 });
@@ -95,7 +113,13 @@ test("Records cached narration", () => {
       cached: 1,
       cacheHits: 1,
       cacheMisses: 0,
-      cacheHitRate: 1
+      cacheHitRate: 1,
+      apiRequests: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      totalApiLatencyMs: 0,
+      averageApiLatencyMs: 0
     }
   );
 });
@@ -182,7 +206,13 @@ test("Resets all metrics", () => {
       cached: 0,
       cacheHits: 0,
       cacheMisses: 0,
-      cacheHitRate: 0
+      cacheHitRate: 0,
+      apiRequests: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      totalApiLatencyMs: 0,
+      averageApiLatencyMs: 0
     }
   );
 });

@@ -418,7 +418,13 @@ async function runTests() {
           cached: 0,
           cacheHits: 0,
           cacheMisses: 1,
-          cacheHitRate: 0
+          cacheHitRate: 0,
+          apiRequests: 1,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          totalApiLatencyMs: 0,
+          averageApiLatencyMs: 0
         }
       );
     }
@@ -444,7 +450,13 @@ async function runTests() {
           cached: 1,
           cacheHits: 1,
           cacheMisses: 1,
-          cacheHitRate: 0.5
+          cacheHitRate: 0.5,
+          apiRequests: 1,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          totalApiLatencyMs: 0,
+          averageApiLatencyMs: 0
         }
       );
     }
@@ -472,7 +484,13 @@ async function runTests() {
           cached: 0,
           cacheHits: 0,
           cacheMisses: 0,
-          cacheHitRate: 0
+          cacheHitRate: 0,
+          apiRequests: 1,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          totalApiLatencyMs: 0,
+          averageApiLatencyMs: 0
         }
       );
     }

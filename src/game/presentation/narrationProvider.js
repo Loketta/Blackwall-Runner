@@ -162,7 +162,9 @@ class NarrationProvider {
       const narrationResult =
         await this.#narrator.narrate(request);
 
-      this.#metrics.recordGenerated();
+      this.#recordGenerated(
+        narrationResult
+      );
 
       return narrationResult;
     }
@@ -205,11 +207,48 @@ class NarrationProvider {
 
     this.#cache.store(snapshot);
 
-    this.#metrics.recordGenerated({
-      cacheMiss: true
-    });
+    this.#recordGenerated(
+      narrationResult,
+      {
+        cacheMiss: true
+      }
+    );
 
     return narrationResult;
+  }
+
+  #recordGenerated(
+    narrationResult,
+    {
+      cacheMiss = false
+    } = {}
+  ) {
+    const isAPIRequest =
+      narrationResult?.source === "openai";
+
+    const usage =
+      narrationResult?.usage ?? {};
+
+    this.#metrics.recordGenerated({
+      cacheMiss,
+      apiRequest: isAPIRequest,
+      inputTokens:
+        isAPIRequest
+          ? usage.inputTokens ?? 0
+          : 0,
+      outputTokens:
+        isAPIRequest
+          ? usage.outputTokens ?? 0
+          : 0,
+      totalTokens:
+        isAPIRequest
+          ? usage.totalTokens ?? 0
+          : 0,
+      latencyMs:
+        isAPIRequest
+          ? narrationResult.latencyMs ?? 0
+          : 0
+    });
   }
 
   getMetrics() {
