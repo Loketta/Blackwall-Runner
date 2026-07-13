@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const {
   ActionContext
@@ -15,6 +15,9 @@ const {
 const {
   performInventoryAction
 } = require("../actions/inventoryAction");
+const {
+  performStatusAction
+} = require("../actions/statusAction");
 const {
   performMoveAction
 } = require("../actions/moveAction");
@@ -60,6 +63,10 @@ function performAction(player, action, services = {}) {
     return performInventoryAction(context);
   }
 
+  if (action.type === "status") {
+    return performStatusAction(context);
+  }
+
   if (action.type === "take") {
     return performTakeAction(context);
   }
@@ -90,4 +97,3 @@ function performAction(player, action, services = {}) {
 module.exports = {
   performAction
 };
-
