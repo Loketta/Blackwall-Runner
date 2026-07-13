@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const path = require("path");
 const { createJsonFileRepository } = require(
@@ -6,6 +6,7 @@ const { createJsonFileRepository } = require(
 );
 const { PersistentEventStore } = require("./persistentEventStore");
 const { EventRecorder } = require("./eventRecorder");
+const { EventHistory } = require("./eventHistory");
 
 const eventRepository = createJsonFileRepository({
   filePath: path.join(
@@ -23,8 +24,13 @@ const eventRecorder = new EventRecorder({
   eventStore
 });
 
+const eventHistory = new EventHistory({
+  eventStore
+});
+
 const eventServices = Object.freeze({
-  eventRecorder
+  eventRecorder,
+  eventHistory
 });
 
 function getEventServices() {
