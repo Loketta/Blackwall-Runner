@@ -34,3 +34,13 @@ The engine should eventually support:
 - Commercially safe setting and ruleset packages
 
 The AI is not the authority over game state. It interprets player intentions and presents validated outcomes produced by the engine.
+
+## Persistent Worlds
+
+Blackwall Runner treats persistent worlds as the primary unit of continuity.
+
+Campaigns are chapters within a world. Characters belong permanently to the world in which they were created, and later campaigns inherit the consequences of earlier campaigns.
+
+The engine records meaningful consequences rather than simulating complexity for its own sake.
+
+See `docs/design/PERSISTENT_WORLD_DESIGN.md`.

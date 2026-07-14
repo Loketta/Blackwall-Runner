@@ -117,3 +117,23 @@ Campaigns will eventually select modular packages for:
 - Spatial Mode
 
 Theatre-of-the-mind play remains the first implementation target. Zone-based positioning and tactical battlemaps may be added later without changing which system owns spatial truth.
+
+## Persistent-World Architecture
+
+The intended persistence hierarchy is:
+
+```text
+Setting Template
+    ↓
+Persistent World
+    ↓
+Campaign
+    ↓
+Session
+```
+
+Characters, events, locations, NPC state, graveyard records and campaigns belong to their persistent world.
+
+The final storage implementation remains under design.
+
+See `docs/design/PERSISTENT_WORLD_DESIGN.md`.

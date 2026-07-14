@@ -343,3 +343,21 @@ Maintaining these boundaries is more important than implementing features quickl
 The architecture should remain understandable even years into development.
 
 That is the standard every new milestone should aim to preserve.
+
+## Persistent-World Milestone
+
+Before character creation is implemented, persistence should be reorganised around world instances rather than a character-specific save directory.
+
+Recommended sequence:
+
+1. define setting-template ownership;
+2. introduce persistent world identity;
+3. create world-scoped repository paths;
+4. move mutable runtime state into world instances;
+5. add campaign persistence;
+6. add player identity and character assignments;
+7. add starting-character creation;
+8. add world contributions and campaign preferences;
+9. generate campaigns within protected world canon.
+
+See `docs/design/PERSISTENT_WORLD_DESIGN.md`.

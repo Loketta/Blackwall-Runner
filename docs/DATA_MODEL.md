@@ -447,3 +447,24 @@ Everything else—
 should simply observe or modify that model through the engine.
 
 The data model is the foundation upon which every future system will be built.
+
+## Persistent-World Data Ownership
+
+The world is the primary unit of persistent ownership.
+
+Characters are permanently bound to one world. Campaigns are nested beneath that world and update its live state rather than owning separate copies.
+
+World-owned records include:
+
+- world identity and calendar;
+- characters;
+- NPC state;
+- locations;
+- shops;
+- containers;
+- world objects;
+- events;
+- graveyard records;
+- campaigns.
+
+See `docs/design/PERSISTENT_WORLD_DESIGN.md`.

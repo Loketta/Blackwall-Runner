@@ -441,3 +441,20 @@ The engine owns truth.
 The world owns consequence.
 
 The AI owns presentation.
+
+## Persistent-World Player Agency
+
+Players control their own intentions and character actions.
+
+The AI may generate campaigns and propose content, but it must not dictate player actions or rewrite established world canon.
+
+Players retain control over:
+
+- character retirement;
+- retired-character NPC consent;
+- legacy nomination;
+- campaign-conclusion votes;
+- optional world contributions;
+- campaign preferences.
+
+See `docs/design/PERSISTENT_WORLD_DESIGN.md`.
