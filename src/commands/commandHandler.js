@@ -34,6 +34,9 @@ const {
 const {
   runOpenCommand
 } = require("./handlers/openCommand");
+const {
+  runMetricsCommand
+} = require("./handlers/metricsCommand");
 
 function showHelp(log = console.log) {
   log("Unknown command.");
@@ -50,6 +53,7 @@ function showHelp(log = console.log) {
   log("talk <person>");
   log("shop");
   log("open <container>");
+  log("metrics");
 }
 
 async function handleCommand(
@@ -57,6 +61,11 @@ async function handleCommand(
   args,
   services = {}
 ) {
+  if (command === "metrics") {
+    runMetricsCommand(services);
+    return;
+  }
+
   const loadPlayerService =
     services.loadPlayer ?? loadPlayer;
 

@@ -145,6 +145,92 @@ async function runTests() {
   );
 
   await test(
+    "Runs metrics without loading the player",
+    async () => {
+      let loadCount = 0;
+      const messages = [];
+
+      const {
+        handleCommand
+      } = await loadHandlerWithStubs();
+
+      await handleCommand(
+        "metrics",
+        [],
+        {
+          loadPlayer() {
+            loadCount += 1;
+            return {
+              id: "player_runner_1"
+            };
+          },
+          presentationPipeline: {
+            getMetrics() {
+              return {
+                requests: 0,
+                generated: 0,
+                cached: 0,
+                cacheHits: 0,
+                cacheMisses: 0,
+                cacheHitRate: 0,
+                apiRequests: 0,
+                inputTokens: 0,
+                outputTokens: 0,
+                totalTokens: 0,
+                totalApiLatencyMs: 0,
+                averageApiLatencyMs: 0
+              };
+            }
+          },
+          log(message) {
+            messages.push(message);
+          }
+        }
+      );
+
+      assert.strictEqual(
+        loadCount,
+        0
+      );
+
+      assert.strictEqual(
+        messages[0],
+        "=== NARRATION METRICS ==="
+      );
+    }
+  );
+
+  await test(
+    "Includes metrics in help output",
+    async () => {
+      const messages = [];
+
+      const {
+        handleCommand
+      } = await loadHandlerWithStubs();
+
+      await handleCommand(
+        "unknown",
+        [],
+        {
+          loadPlayer() {
+            return {
+              id: "player_runner_1"
+            };
+          },
+          log(message) {
+            messages.push(message);
+          }
+        }
+      );
+
+      assert.ok(
+        messages.includes("metrics")
+      );
+    }
+  );
+
+  await test(
     "Prints help for unknown commands",
     async () => {
       const messages = [];
