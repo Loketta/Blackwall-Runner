@@ -4,6 +4,10 @@ const {
   createApplicationServices
 } = require("./application/applicationServices");
 const {
+  bootstrapWorld
+} = require("./application/worldBootstrap");
+
+const {
   createInteractiveCli
 } = require("./application/interactiveCli");
 const {
@@ -19,8 +23,11 @@ const {
 const command = process.argv[2];
 const args = process.argv.slice(3);
 
+const worldBootstrap = bootstrapWorld();
 const applicationServices =
-  createApplicationServices();
+  createApplicationServices({
+    worldManager: worldBootstrap.worldManager
+  });
 
 function getInteractivePrompt() {
   const player = loadPlayer();
