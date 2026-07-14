@@ -35,38 +35,60 @@ const {
   runOpenCommand
 } = require("./handlers/openCommand");
 
-function showHelp() {
-  console.log("Unknown command.");
-  console.log("Available commands:");
-  console.log("status");
-  console.log("look");
-  console.log("move <exit>");
-  console.log("wait <minutes>");
-  console.log("inventory");
-  console.log("take <item>");
-  console.log("take <item> from <container>");
-  console.log("drop <item>");
-  console.log("drop <item> into <container>");
-  console.log("talk <person>");
-  console.log("shop");
-  console.log("open <container>");
+function showHelp(log = console.log) {
+  log("Unknown command.");
+  log("Available commands:");
+  log("status");
+  log("look");
+  log("move <exit>");
+  log("wait <minutes>");
+  log("inventory");
+  log("take <item>");
+  log("take <item> from <container>");
+  log("drop <item>");
+  log("drop <item> into <container>");
+  log("talk <person>");
+  log("shop");
+  log("open <container>");
 }
 
-async function handleCommand(command, args) {
-  const player = loadPlayer();
+async function handleCommand(
+  command,
+  args,
+  services = {}
+) {
+  const loadPlayerService =
+    services.loadPlayer ?? loadPlayer;
+
+  const player = loadPlayerService();
+
+  const commandServices = {
+    presentationPipeline:
+      services.presentationPipeline
+  };
 
   if (command === "status") {
-    await runStatusCommand(player);
+    await runStatusCommand(
+      player,
+      commandServices
+    );
     return;
   }
 
   if (command === "look") {
-    await runLookCommand(player);
+    await runLookCommand(
+      player,
+      commandServices
+    );
     return;
   }
 
   if (command === "move" || command === "go") {
-    await runMoveCommand(player, args);
+    await runMoveCommand(
+      player,
+      args,
+      commandServices
+    );
     return;
   }
 
@@ -76,22 +98,37 @@ async function handleCommand(command, args) {
   }
 
   if (command === "inventory") {
-    await runInventoryCommand(player);
+    await runInventoryCommand(
+      player,
+      commandServices
+    );
     return;
   }
 
   if (command === "take") {
-    await runTakeCommand(player, args);
+    await runTakeCommand(
+      player,
+      args,
+      commandServices
+    );
     return;
   }
 
   if (command === "drop") {
-    await runDropCommand(player, args);
+    await runDropCommand(
+      player,
+      args,
+      commandServices
+    );
     return;
   }
 
   if (command === "talk") {
-    await runTalkCommand(player, args);
+    await runTalkCommand(
+      player,
+      args,
+      commandServices
+    );
     return;
   }
 
@@ -101,13 +138,18 @@ async function handleCommand(command, args) {
   }
 
   if (command === "open") {
-    await runOpenCommand(player, args);
+    await runOpenCommand(
+      player,
+      args,
+      commandServices
+    );
     return;
   }
 
-  showHelp();
+  showHelp(services.log ?? console.log);
 }
 
 module.exports = {
-  handleCommand
+  handleCommand,
+  showHelp
 };
