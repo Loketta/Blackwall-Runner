@@ -21,6 +21,7 @@ function createInteractiveCli({
   output = process.stdout,
   log = console.log,
   clearTerminal = console.clear,
+  getPrompt = () => "> ",
   createInterface = readline.createInterface
 }) {
   if (typeof handleCommand !== "function") {
@@ -44,6 +45,12 @@ function createInteractiveCli({
     );
   }
 
+  if (typeof getPrompt !== "function") {
+    throw new TypeError(
+      "getPrompt must be a function."
+    );
+  }
+
   if (typeof createInterface !== "function") {
     throw new TypeError(
       "createInterface must be a function."
@@ -56,11 +63,37 @@ function createInteractiveCli({
     prompt: "> "
   });
 
+  function showPrompt() {
+    let prompt = "> ";
+
+    try {
+      const resolvedPrompt = getPrompt();
+
+      if (
+        typeof resolvedPrompt === "string" &&
+        resolvedPrompt.length > 0
+      ) {
+        prompt = resolvedPrompt;
+      }
+    } catch (error) {
+      prompt = "> ";
+    }
+
+    if (
+      typeof interfaceInstance.setPrompt ===
+      "function"
+    ) {
+      interfaceInstance.setPrompt(prompt);
+    }
+
+    interfaceInstance.prompt();
+  }
+
   async function processLine(line) {
     const { command, args } = parseCommandLine(line);
 
     if (!command) {
-      interfaceInstance.prompt();
+      showPrompt();
       return;
     }
 
@@ -76,7 +109,7 @@ function createInteractiveCli({
 
     if (normalisedCommand === "clear") {
       clearTerminal();
-      interfaceInstance.prompt();
+      showPrompt();
       return;
     }
 
@@ -90,7 +123,7 @@ function createInteractiveCli({
         }
       );
 
-      interfaceInstance.prompt();
+      showPrompt();
       return;
     }
 
@@ -107,7 +140,7 @@ function createInteractiveCli({
       log(`Command failed: ${error.message}`);
     }
 
-    interfaceInstance.prompt();
+    showPrompt();
   }
 
   function start() {
@@ -128,7 +161,7 @@ function createInteractiveCli({
       }
     );
 
-    interfaceInstance.prompt();
+    showPrompt();
 
     return interfaceInstance;
   }

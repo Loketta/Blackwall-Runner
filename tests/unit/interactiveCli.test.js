@@ -29,7 +29,9 @@ function createInterfaceStub() {
 
   const tracker = {
     promptCount: 0,
-    closeCount: 0
+    closeCount: 0,
+    promptValue: "> ",
+    promptValues: []
   };
 
   return {
@@ -38,6 +40,11 @@ function createInterfaceStub() {
     interfaceInstance: {
       on(eventName, handler) {
         handlers[eventName] = handler;
+      },
+
+      setPrompt(value) {
+        tracker.promptValue = value;
+        tracker.promptValues.push(value);
       },
 
       prompt() {
@@ -307,6 +314,58 @@ async function runTests() {
     }
   );
 
+  await test(
+    "Updates the prompt after commands",
+    async () => {
+      let locationName = "Back Alley";
+      const interfaceStub =
+        createInterfaceStub();
+
+      const cli = createInteractiveCli({
+        async handleCommand(command) {
+          if (command === "move") {
+            locationName = "Safehouse";
+          }
+        },
+
+        applicationServices: {},
+
+        getPrompt() {
+          return `[${locationName}] > `;
+        },
+
+        log() {},
+
+        createInterface() {
+          return interfaceStub.interfaceInstance;
+        }
+      });
+
+      cli.start();
+
+      assert.strictEqual(
+        interfaceStub.tracker.promptValue,
+        "[Back Alley] > "
+      );
+
+      await interfaceStub.handlers.line(
+        "move safehouse"
+      );
+
+      assert.strictEqual(
+        interfaceStub.tracker.promptValue,
+        "[Safehouse] > "
+      );
+
+      assert.deepStrictEqual(
+        interfaceStub.tracker.promptValues,
+        [
+          "[Back Alley] > ",
+          "[Safehouse] > "
+        ]
+      );
+    }
+  );
   await test(
     "Prints command failures and continues",
     async () => {
