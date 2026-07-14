@@ -60,7 +60,9 @@ function createInteractiveCli({
   const interfaceInstance = createInterface({
     input,
     output,
-    prompt: "> "
+    prompt: "> ",
+    historySize: 100,
+    removeHistoryDuplicates: true
   });
 
   function showPrompt() {

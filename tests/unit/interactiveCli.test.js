@@ -103,6 +103,37 @@ async function runTests() {
   );
 
   await test(
+    "Configures readline command history",
+    async () => {
+      let interfaceOptions;
+      const interfaceStub =
+        createInterfaceStub();
+
+      createInteractiveCli({
+        async handleCommand() {},
+
+        applicationServices: {},
+
+        log() {},
+
+        createInterface(options) {
+          interfaceOptions = options;
+          return interfaceStub.interfaceInstance;
+        }
+      });
+
+      assert.strictEqual(
+        interfaceOptions.historySize,
+        100
+      );
+
+      assert.strictEqual(
+        interfaceOptions.removeHistoryDuplicates,
+        true
+      );
+    }
+  );
+  await test(
     "Uses one shared service container",
     async () => {
       const calls = [];
