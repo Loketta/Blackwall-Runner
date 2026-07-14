@@ -17,10 +17,45 @@ function requireFunction(
   }
 }
 
+function requirePresentationPipeline(
+  presentationPipeline
+) {
+  if (
+    !presentationPipeline ||
+    typeof presentationPipeline.present !==
+      "function" ||
+    typeof presentationPipeline.getMetrics !==
+      "function"
+  ) {
+    throw new TypeError(
+      "presentationPipeline must provide present and getMetrics functions."
+    );
+  }
+}
+
+function requireWorldManager(
+  worldManager
+) {
+  if (worldManager === null) {
+    return;
+  }
+
+  if (
+    !worldManager ||
+    typeof worldManager.getActiveWorld !==
+      "function"
+  ) {
+    throw new TypeError(
+      "worldManager must provide a getActiveWorld function."
+    );
+  }
+}
+
 function createApplicationServices({
   presentationPipeline = null,
   presentationPipelineFactory =
-    createPresentationPipeline
+    createPresentationPipeline,
+  worldManager = null
 } = {}) {
   requireFunction(
     presentationPipelineFactory,
@@ -31,21 +66,16 @@ function createApplicationServices({
     presentationPipeline ??
     presentationPipelineFactory();
 
-  if (
-    !sharedPresentationPipeline ||
-    typeof sharedPresentationPipeline.present !==
-      "function" ||
-    typeof sharedPresentationPipeline.getMetrics !==
-      "function"
-  ) {
-    throw new TypeError(
-      "presentationPipeline must provide present and getMetrics functions."
-    );
-  }
+  requirePresentationPipeline(
+    sharedPresentationPipeline
+  );
+
+  requireWorldManager(worldManager);
 
   return Object.freeze({
     presentationPipeline:
-      sharedPresentationPipeline
+      sharedPresentationPipeline,
+    worldManager
   });
 }
 

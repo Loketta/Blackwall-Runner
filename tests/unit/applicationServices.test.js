@@ -22,6 +22,22 @@ function test(name, testFunction) {
   }
 }
 
+function createPipeline() {
+  return {
+    async present() {
+      return {
+        narration: "Narration."
+      };
+    },
+
+    getMetrics() {
+      return {
+        requests: 0
+      };
+    }
+  };
+}
+
 console.log("================================");
 console.log("APPLICATION SERVICES TESTS");
 console.log("================================");
@@ -31,20 +47,7 @@ test(
   "Creates one shared presentation pipeline",
   () => {
     let factoryCalls = 0;
-
-    const pipeline = {
-      async present() {
-        return {
-          narration: "Narration."
-        };
-      },
-
-      getMetrics() {
-        return {
-          requests: 0
-        };
-      }
-    };
+    const pipeline = createPipeline();
 
     const services =
       createApplicationServices({
@@ -70,20 +73,7 @@ test(
   "Uses an injected presentation pipeline",
   () => {
     let factoryCalls = 0;
-
-    const pipeline = {
-      async present() {
-        return {
-          narration: "Injected narration."
-        };
-      },
-
-      getMetrics() {
-        return {
-          requests: 3
-        };
-      }
-    };
+    const pipeline = createPipeline();
 
     const services =
       createApplicationServices({
@@ -108,19 +98,63 @@ test(
 );
 
 test(
+  "Exposes an injected world manager",
+  () => {
+    const activeWorld = {
+      worldId: "development-world"
+    };
+
+    const worldManager = {
+      getActiveWorld() {
+        return activeWorld;
+      }
+    };
+
+    const services =
+      createApplicationServices({
+        presentationPipeline:
+          createPipeline(),
+        worldManager
+      });
+
+    assert.strictEqual(
+      services.worldManager,
+      worldManager
+    );
+
+    assert.strictEqual(
+      services.worldManager.getActiveWorld(),
+      activeWorld
+    );
+  }
+);
+
+test(
+  "Defaults to no world manager",
+  () => {
+    const services =
+      createApplicationServices({
+        presentationPipeline:
+          createPipeline()
+      });
+
+    assert.strictEqual(
+      services.worldManager,
+      null
+    );
+  }
+);
+
+test(
   "Returns an immutable service container",
   () => {
     const services =
       createApplicationServices({
-        presentationPipeline: {
-          async present() {
-            return {
-              narration: "Narration."
-            };
-          },
-
-          getMetrics() {
-            return {};
+        presentationPipeline:
+          createPipeline(),
+        worldManager: {
+          getActiveWorld() {
+            return null;
           }
         }
       });
@@ -133,6 +167,13 @@ test(
     assert.throws(
       () => {
         services.presentationPipeline = null;
+      },
+      TypeError
+    );
+
+    assert.throws(
+      () => {
+        services.worldManager = null;
       },
       TypeError
     );
@@ -161,6 +202,20 @@ test(
         }
       }),
       /presentationPipeline must provide present and getMetrics functions/
+    );
+  }
+);
+
+test(
+  "Rejects an invalid world manager",
+  () => {
+    assert.throws(
+      () => createApplicationServices({
+        presentationPipeline:
+          createPipeline(),
+        worldManager: {}
+      }),
+      /worldManager must provide a getActiveWorld function/
     );
   }
 );
