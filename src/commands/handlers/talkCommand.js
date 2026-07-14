@@ -4,9 +4,9 @@ const {
   loadRuntimeConfig
 } = require("../../config/runtimeConfig");
 const {
-  createPresentationPipeline
+  requirePresentationPipeline
 } = require(
-  "../../game/presentation/createPresentationPipeline"
+  "../services/requirePresentationPipeline"
 );
 const {
   CommandNarrationService
@@ -28,8 +28,6 @@ const {
   getEventServices
 } = require("../../game/events/eventServices");
 
-const defaultPresentationPipeline =
-  createPresentationPipeline();
 
 async function runTalkCommand(
   player,
@@ -42,9 +40,7 @@ async function runTalkCommand(
     services.loadWorld ?? loadWorld;
   const getEventServicesService =
     services.getEventServices ?? getEventServices;
-  const presentationPipeline =
-    services.presentationPipeline ??
-    defaultPresentationPipeline;
+
   const configLoader =
     services.configLoader ?? loadRuntimeConfig;
   const log = services.log ?? console.log;
@@ -67,7 +63,10 @@ async function runTalkCommand(
       loadWorld: loadWorldService,
       getEventServices:
         getEventServicesService,
-      presentationPipeline
+      presentationPipeline:
+        requirePresentationPipeline(
+          services
+        )
     });
 
   const presentationMode =

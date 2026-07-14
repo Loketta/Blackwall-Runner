@@ -4,9 +4,9 @@ const {
   loadRuntimeConfig
 } = require("../../config/runtimeConfig");
 const {
-  createPresentationPipeline
+  requirePresentationPipeline
 } = require(
-  "../../game/presentation/createPresentationPipeline"
+  "../services/requirePresentationPipeline"
 );
 const {
   CommandNarrationService
@@ -25,8 +25,6 @@ const {
   getEventServices
 } = require("../../game/events/eventServices");
 
-const defaultPresentationPipeline =
-  createPresentationPipeline();
 
 async function runStatusCommand(
   player,
@@ -36,9 +34,7 @@ async function runStatusCommand(
     services.performAction ?? performAction;
   const getEventServicesService =
     services.getEventServices ?? getEventServices;
-  const presentationPipeline =
-    services.presentationPipeline ??
-    defaultPresentationPipeline;
+
   const configLoader =
     services.configLoader ?? loadRuntimeConfig;
   const log = services.log ?? console.log;
@@ -81,7 +77,10 @@ async function runStatusCommand(
       getEventServices:
         getEventServicesService,
 
-      presentationPipeline
+      presentationPipeline:
+        requirePresentationPipeline(
+          services
+        )
     });
 
   const presentationMode =

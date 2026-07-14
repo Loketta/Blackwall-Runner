@@ -7,9 +7,9 @@ const {
   describeLocation
 } = require("../../game/presentation/locationDescriber");
 const {
-  createPresentationPipeline
+  requirePresentationPipeline
 } = require(
-  "../../game/presentation/createPresentationPipeline"
+  "../services/requirePresentationPipeline"
 );
 const {
   CommandNarrationService
@@ -31,8 +31,6 @@ const {
   getEventServices
 } = require("../../game/events/eventServices");
 
-const defaultPresentationPipeline =
-  createPresentationPipeline();
 
 async function runLookCommand(
   player,
@@ -46,9 +44,7 @@ async function runLookCommand(
     services.loadWorld ?? loadWorld;
   const getEventServicesService =
     services.getEventServices ?? getEventServices;
-  const presentationPipeline =
-    services.presentationPipeline ??
-    defaultPresentationPipeline;
+
   const configLoader =
     services.configLoader ?? loadRuntimeConfig;
 
@@ -58,7 +54,10 @@ async function runLookCommand(
       loadWorld: loadWorldService,
       getEventServices:
         getEventServicesService,
-      presentationPipeline
+      presentationPipeline:
+        requirePresentationPipeline(
+          services
+        )
     });
 
   const log = services.log ?? console.log;

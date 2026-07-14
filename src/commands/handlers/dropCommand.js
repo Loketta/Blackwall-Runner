@@ -1,9 +1,9 @@
 "use strict";
 
 const {
-  createPresentationPipeline
+  requirePresentationPipeline
 } = require(
-  "../../game/presentation/createPresentationPipeline"
+  "../services/requirePresentationPipeline"
 );
 const {
   performAction
@@ -15,8 +15,6 @@ const {
   getEventServices
 } = require("../../game/events/eventServices");
 
-const defaultPresentationPipeline =
-  createPresentationPipeline();
 
 async function runDropCommand(
   player,
@@ -29,9 +27,7 @@ async function runDropCommand(
     services.loadWorld ?? loadWorld;
   const getEventServicesService =
     services.getEventServices ?? getEventServices;
-  const presentationPipeline =
-    services.presentationPipeline ??
-    defaultPresentationPipeline;
+
   const log = services.log ?? console.log;
 
   const intoIndex = args.findIndex(function (arg) {
@@ -85,6 +81,9 @@ async function runDropCommand(
   if (!result.success) {
     return;
   }
+
+  const presentationPipeline =
+    requirePresentationPipeline(services);
 
   const world = loadWorldService();
 
