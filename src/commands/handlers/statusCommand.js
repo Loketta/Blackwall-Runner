@@ -1,9 +1,22 @@
 "use strict";
 
 const {
+  loadRuntimeConfig
+} = require("../../config/runtimeConfig");
+const {
   createPresentationPipeline
 } = require(
   "../../game/presentation/createPresentationPipeline"
+);
+const {
+  CommandNarrationService
+} = require(
+  "../../game/presentation/commandNarrationService"
+);
+const {
+  PresentationPolicy
+} = require(
+  "../../game/presentation/presentationPolicy"
 );
 const {
   performAction
@@ -26,6 +39,8 @@ async function runStatusCommand(
   const presentationPipeline =
     services.presentationPipeline ??
     defaultPresentationPipeline;
+  const configLoader =
+    services.configLoader ?? loadRuntimeConfig;
   const log = services.log ?? console.log;
 
   const result = performActionService(
@@ -44,35 +59,66 @@ async function runStatusCommand(
   const status = result.data.status;
   const world = result.data.world;
 
-  log("=== PLAYER STATUS ===");
-  log(`Name: ${status.name}`);
-  log(`Role: ${status.role}`);
-  log(`Health: ${status.health}`);
-  log(`Credits: ${status.credits}`);
-  log(`Location: ${status.location}`);
-  log(`Day: ${world.day}`);
-  log(`Time: ${world.currentTime}`);
-  log(`Weather: ${world.weather}`);
+  function renderMechanicalOutput() {
+    log("=== PLAYER STATUS ===");
+    log(`Name: ${status.name}`);
+    log(`Role: ${status.role}`);
+    log(`Health: ${status.health}`);
+    log(`Credits: ${status.credits}`);
+    log(`Location: ${status.location}`);
+    log(`Day: ${world.day}`);
+    log(`Time: ${world.currentTime}`);
+    log(`Weather: ${world.weather}`);
+  }
 
-  const eventServices =
-    getEventServicesService();
+  const commandNarrationService =
+    services.commandNarrationService ??
+    new CommandNarrationService({
+      loadWorld() {
+        return world;
+      },
 
-  const narrationResult =
-    await presentationPipeline.present({
-      player,
-      world,
-      playerInput: "I check my status.",
-      eventHistory:
-        eventServices?.eventHistory ?? null,
-      mode: "narrate_action",
-      instructions: {
-        preservePlayerAgency: true,
-        useOnlyProvidedFacts: true
-      }
+      getEventServices:
+        getEventServicesService,
+
+      presentationPipeline
     });
 
-  log("");
-  log(narrationResult.narration);
+  const presentationMode =
+    services.presentationMode ??
+    configLoader().presentationMode;
+
+  const presentationPolicy =
+    services.presentationPolicy ??
+    new PresentationPolicy({
+      mode: presentationMode
+    });
+
+  await presentationPolicy.present({
+    createNarration() {
+      return commandNarrationService
+        .createNarration({
+          player,
+          playerInput:
+            "I check my status.",
+          mode: "narrate_action",
+          instructions: {
+            preservePlayerAgency: true,
+            useOnlyProvidedFacts: true
+          }
+        });
+    },
+
+    renderNarration(narrationResult) {
+      renderMechanicalOutput();
+      log("");
+      log(narrationResult.narration);
+    },
+
+    renderFallback() {
+      renderMechanicalOutput();
+    }
+  });
 }
 
 module.exports = {

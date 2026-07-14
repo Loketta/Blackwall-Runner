@@ -81,6 +81,8 @@ function createServices(tracker = {}) {
       };
     },
 
+    presentationMode: "player",
+
     presentationPipeline: {
       async present(options) {
         tracker.presentationOptions = options;
@@ -262,6 +264,8 @@ async function runTests() {
             };
           },
 
+          presentationMode: "player",
+
           presentationPipeline: {
             async present() {
               await Promise.resolve();
@@ -289,6 +293,82 @@ async function runTests() {
     }
   );
 
+  await test(
+    "Uses detailed status output in developer mode",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationMode =
+        "developer";
+
+      await runStatusCommand(
+        createPlayer(),
+        services
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        [
+          "=== PLAYER STATUS ===",
+          "Name: Runner",
+          "Role: Solo",
+          "Health: 35",
+          "Credits: 1200",
+          "Location: back_alley_1",
+          "Day: 4",
+          "Time: 21:30",
+          "Weather: light rain"
+        ]
+      );
+
+      assert.strictEqual(
+        tracker.presentationOptions,
+        undefined
+      );
+
+      assert.strictEqual(
+        tracker.eventServicesWereLoaded,
+        undefined
+      );
+    }
+  );
+
+  await test(
+    "Falls back when status narration fails",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationPipeline = {
+        async present() {
+          throw new Error(
+            "Narration service unavailable."
+          );
+        }
+      };
+
+      await runStatusCommand(
+        createPlayer(),
+        services
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        [
+          "=== PLAYER STATUS ===",
+          "Name: Runner",
+          "Role: Solo",
+          "Health: 35",
+          "Credits: 1200",
+          "Location: back_alley_1",
+          "Day: 4",
+          "Time: 21:30",
+          "Weather: light rain"
+        ]
+      );
+    }
+  );
   await test(
     "Prints failures without presenting",
     async () => {
