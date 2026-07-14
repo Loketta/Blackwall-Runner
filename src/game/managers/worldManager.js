@@ -1,24 +1,56 @@
 "use strict";
 
+const fs = require("fs");
 const path = require("path");
 const { World } = require("../world/world");
 const {
   createJsonFileRepository
 } = require("../repositories/jsonFileRepository");
+const {
+  getWorldStateFilePath
+} = require("../world/worldStatePaths");
+
+const savesDirectory =
+  process.env.BLACKWALL_SAVES_DIRECTORY ??
+  path.join(__dirname, "../../../saves");
+
+const worldStatePath = getWorldStateFilePath({
+  savesDirectory
+});
+
+const templateWorldPath = path.join(
+  __dirname,
+  "../../../data/World/world.json"
+);
+
+function ensureWorldState() {
+  if (fs.existsSync(worldStatePath)) {
+    return;
+  }
+
+  fs.mkdirSync(
+    path.dirname(worldStatePath),
+    { recursive: true }
+  );
+
+  fs.copyFileSync(
+    templateWorldPath,
+    worldStatePath
+  );
+}
 
 const worldRepository = createJsonFileRepository({
-  filePath: path.join(
-    __dirname,
-    "../../../data/World/world.json"
-  ),
+  filePath: worldStatePath,
   indentation: 2
 });
 
 function loadWorld() {
+  ensureWorldState();
   return worldRepository.load();
 }
 
 function saveWorld(world) {
+  ensureWorldState();
   return worldRepository.save(world);
 }
 

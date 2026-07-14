@@ -255,6 +255,12 @@ function runRegressionSuite() {
     )
   );
 
+  const previousSavesDirectory =
+    process.env.BLACKWALL_SAVES_DIRECTORY;
+
+  process.env.BLACKWALL_SAVES_DIRECTORY =
+    path.join(temporaryDirectory, "saves");
+
   const backupDataPath = path.join(
     temporaryDirectory,
     "data"
@@ -326,6 +332,13 @@ function runRegressionSuite() {
         "Live data was not replaced because " +
         "the backup did not complete."
       );
+    }
+
+    if (previousSavesDirectory === undefined) {
+      delete process.env.BLACKWALL_SAVES_DIRECTORY;
+    } else {
+      process.env.BLACKWALL_SAVES_DIRECTORY =
+        previousSavesDirectory;
     }
 
     fs.rmSync(temporaryDirectory, {
