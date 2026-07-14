@@ -40,6 +40,11 @@ class PresentationPipeline {
       "narrate",
       "narrator"
     );
+    requireService(
+      narrator,
+      "getMetrics",
+      "narrator"
+    );
 
     this.#aiContextBuilder = aiContextBuilder;
     this.#narrativeContextBuilder =
@@ -76,6 +81,10 @@ class PresentationPipeline {
     });
 
     return this.#narrator.narrate(request);
+  }
+
+  getMetrics() {
+    return this.#narrator.getMetrics();
   }
 }
 

@@ -1,12 +1,25 @@
 "use strict";
 
 const {
+  loadRuntimeConfig
+} = require("../../config/runtimeConfig");
+const {
   describeLocation
 } = require("../../game/presentation/locationDescriber");
 const {
   createPresentationPipeline
 } = require(
   "../../game/presentation/createPresentationPipeline"
+);
+const {
+  CommandNarrationService
+} = require(
+  "../../game/presentation/commandNarrationService"
+);
+const {
+  PresentationPolicy
+} = require(
+  "../../game/presentation/presentationPolicy"
 );
 const {
   performAction
@@ -37,6 +50,8 @@ async function runMoveCommand(
   const presentationPipeline =
     services.presentationPipeline ??
     defaultPresentationPipeline;
+  const configLoader =
+    services.configLoader ?? loadRuntimeConfig;
   const log = services.log ?? console.log;
 
   const exitName = args[0];
@@ -58,28 +73,59 @@ async function runMoveCommand(
     return;
   }
 
-  log("");
-  describeLocationService(result.data.location);
+  const commandNarrationService =
+    services.commandNarrationService ??
+    new CommandNarrationService({
+      loadWorld: loadWorldService,
 
-  const world = loadWorldService();
+      getEventServices() {
+        return eventServices;
+      },
 
-  const narrationResult =
-    await presentationPipeline.present({
-      player,
-      world,
-      playerInput:
-        `I move through ${exitName}.`,
-      eventHistory:
-        eventServices?.eventHistory ?? null,
-      mode: "narrate_action",
-      instructions: {
-        preservePlayerAgency: true,
-        useOnlyProvidedFacts: true
-      }
+      presentationPipeline
     });
 
-  log("");
-  log(narrationResult.narration);
+  const presentationMode =
+    services.presentationMode ??
+    configLoader().presentationMode;
+
+  const presentationPolicy =
+    services.presentationPolicy ??
+    new PresentationPolicy({
+      mode: presentationMode
+    });
+
+  await presentationPolicy.present({
+    createNarration() {
+      return commandNarrationService
+        .createNarration({
+          player,
+          playerInput:
+            `I move through ${exitName}.`,
+          mode: "narrate_action",
+          instructions: {
+            preservePlayerAgency: true,
+            useOnlyProvidedFacts: true
+          }
+        });
+    },
+
+    renderNarration(narrationResult) {
+      log("");
+      describeLocationService(
+        result.data.location
+      );
+      log("");
+      log(narrationResult.narration);
+    },
+
+    renderFallback() {
+      log("");
+      describeLocationService(
+        result.data.location
+      );
+    }
+  });
 }
 
 module.exports = {

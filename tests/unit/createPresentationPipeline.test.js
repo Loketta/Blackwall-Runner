@@ -371,6 +371,38 @@ async function runTests() {
   );
 
   await test(
+    "Exposes initial narration metrics",
+    () => {
+      const pipeline =
+        createPresentationPipeline({
+          provider: "mock",
+          aiContextBuilder:
+            createAIContextBuilder(),
+          narrativeContextBuilder:
+            createNarrativeContextBuilder()
+        });
+
+      assert.deepStrictEqual(
+        pipeline.getMetrics(),
+        {
+          requests: 0,
+          generated: 0,
+          cached: 0,
+          cacheHits: 0,
+          cacheMisses: 0,
+          cacheHitRate: 0,
+          apiRequests: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          totalApiLatencyMs: 0,
+          averageApiLatencyMs: 0
+        }
+      );
+    }
+  );
+
+  await test(
     "Uses runtime configuration for mock composition",
     async () => {
       let configLoads = 0;

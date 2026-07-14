@@ -75,8 +75,11 @@ function createServices(tracker = {}) {
       };
     },
 
+    presentationMode: "player",
+
     presentationPipeline: {
       async present(options) {
+        tracker.presentationWasCalled = true;
         tracker.presentationOptions = options;
 
         return {
@@ -301,6 +304,8 @@ async function runTests() {
             };
           },
 
+          presentationMode: "player",
+
           presentationPipeline: {
             async present() {
               await Promise.resolve();
@@ -325,6 +330,70 @@ async function runTests() {
           "",
           "Asynchronous talk narration."
         ]
+      );
+    }
+  );
+
+  await test(
+    "Uses authoritative dialogue in developer mode",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationMode =
+        "developer";
+
+      await runTalkCommand(
+        createPlayer(),
+        ["Finch"],
+        services
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        ["Keep your voice down."]
+      );
+
+      assert.strictEqual(
+        tracker.presentationWasCalled,
+        undefined
+      );
+
+      assert.strictEqual(
+        tracker.worldWasLoaded,
+        undefined
+      );
+
+      assert.strictEqual(
+        tracker.eventServicesWereLoaded,
+        undefined
+      );
+    }
+  );
+
+  await test(
+    "Falls back when talk narration fails",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationPipeline = {
+        async present() {
+          throw new Error(
+            "Narration service unavailable."
+          );
+        }
+      };
+
+      await runTalkCommand(
+        createPlayer(),
+        ["Finch"],
+        services
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        ["Keep your voice down."]
       );
     }
   );

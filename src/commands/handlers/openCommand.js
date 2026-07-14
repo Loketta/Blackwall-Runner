@@ -1,9 +1,22 @@
 "use strict";
 
 const {
+  loadRuntimeConfig
+} = require("../../config/runtimeConfig");
+const {
   createPresentationPipeline
 } = require(
   "../../game/presentation/createPresentationPipeline"
+);
+const {
+  CommandNarrationService
+} = require(
+  "../../game/presentation/commandNarrationService"
+);
+const {
+  PresentationPolicy
+} = require(
+  "../../game/presentation/presentationPolicy"
 );
 const {
   performAction
@@ -37,6 +50,8 @@ async function runOpenCommand(
   const presentationPipeline =
     services.presentationPipeline ??
     defaultPresentationPipeline;
+  const configLoader =
+    services.configLoader ?? loadRuntimeConfig;
   const log = services.log ?? console.log;
 
   const containerInput =
@@ -52,17 +67,21 @@ async function runOpenCommand(
     containerInput
   });
 
-  log(result.message);
-
   if (!result.success) {
+    log(result.message);
     return;
   }
 
-  const container = result.data.container;
+  function renderMechanicalOutput() {
+    log(result.message);
 
-  if (container.items.length === 0) {
-    log("It is empty.");
-  } else {
+    const container = result.data.container;
+
+    if (container.items.length === 0) {
+      log("It is empty.");
+      return;
+    }
+
     log("");
     log("Contents:");
 
@@ -77,27 +96,50 @@ async function runOpenCommand(
     }
   }
 
-  const world = loadWorldService();
-  const eventServices =
-    getEventServicesService();
-
-  const narrationResult =
-    await presentationPipeline.present({
-      player,
-      world,
-      playerInput:
-        `I open ${containerInput}.`,
-      eventHistory:
-        eventServices?.eventHistory ?? null,
-      mode: "narrate_action",
-      instructions: {
-        preservePlayerAgency: true,
-        useOnlyProvidedFacts: true
-      }
+  const commandNarrationService =
+    services.commandNarrationService ??
+    new CommandNarrationService({
+      loadWorld: loadWorldService,
+      getEventServices:
+        getEventServicesService,
+      presentationPipeline
     });
 
-  log("");
-  log(narrationResult.narration);
+  const presentationMode =
+    services.presentationMode ??
+    configLoader().presentationMode;
+
+  const presentationPolicy =
+    services.presentationPolicy ??
+    new PresentationPolicy({
+      mode: presentationMode
+    });
+
+  await presentationPolicy.present({
+    createNarration() {
+      return commandNarrationService
+        .createNarration({
+          player,
+          playerInput:
+            `I open ${containerInput}.`,
+          mode: "narrate_action",
+          instructions: {
+            preservePlayerAgency: true,
+            useOnlyProvidedFacts: true
+          }
+        });
+    },
+
+    renderNarration(narrationResult) {
+      renderMechanicalOutput();
+      log("");
+      log(narrationResult.narration);
+    },
+
+    renderFallback() {
+      renderMechanicalOutput();
+    }
+  });
 }
 
 module.exports = {

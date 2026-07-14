@@ -86,8 +86,11 @@ function createServices(tracker = {}) {
       };
     },
 
+    presentationMode: "player",
+
     presentationPipeline: {
       async present(options) {
+        tracker.presentationWasCalled = true;
         tracker.presentationOptions = options;
 
         return {
@@ -335,6 +338,8 @@ async function runTests() {
             };
           },
 
+          presentationMode: "player",
+
           presentationPipeline: {
             async present() {
               await Promise.resolve();
@@ -357,6 +362,82 @@ async function runTests() {
         [
           "",
           "Asynchronous open narration."
+        ]
+      );
+    }
+  );
+
+  await test(
+    "Uses mechanical output in developer mode",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationMode =
+        "developer";
+
+      await runOpenCommand(
+        createPlayer(),
+        ["Storage", "Crate"],
+        services
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        [
+          "You open Storage Crate.",
+          "",
+          "Contents:",
+          "- Medkit",
+          "- Unknown Item (item_unknown)"
+        ]
+      );
+
+      assert.strictEqual(
+        tracker.presentationWasCalled,
+        undefined
+      );
+
+      assert.strictEqual(
+        tracker.worldWasLoaded,
+        undefined
+      );
+
+      assert.strictEqual(
+        tracker.eventServicesWereLoaded,
+        undefined
+      );
+    }
+  );
+
+  await test(
+    "Falls back when open narration fails",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationPipeline = {
+        async present() {
+          throw new Error(
+            "Narration service unavailable."
+          );
+        }
+      };
+
+      await runOpenCommand(
+        createPlayer(),
+        ["Storage", "Crate"],
+        services
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        [
+          "You open Storage Crate.",
+          "",
+          "Contents:",
+          "- Medkit",
+          "- Unknown Item (item_unknown)"
         ]
       );
     }
@@ -388,6 +469,8 @@ async function runTests() {
             tracker.worldWasLoaded = true;
             return {};
           },
+
+          presentationMode: "player",
 
           presentationPipeline: {
             async present() {

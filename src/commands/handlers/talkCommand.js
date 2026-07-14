@@ -1,9 +1,22 @@
 "use strict";
 
 const {
+  loadRuntimeConfig
+} = require("../../config/runtimeConfig");
+const {
   createPresentationPipeline
 } = require(
   "../../game/presentation/createPresentationPipeline"
+);
+const {
+  CommandNarrationService
+} = require(
+  "../../game/presentation/commandNarrationService"
+);
+const {
+  PresentationPolicy
+} = require(
+  "../../game/presentation/presentationPolicy"
 );
 const {
   performAction
@@ -32,6 +45,8 @@ async function runTalkCommand(
   const presentationPipeline =
     services.presentationPipeline ??
     defaultPresentationPipeline;
+  const configLoader =
+    services.configLoader ?? loadRuntimeConfig;
   const log = services.log ?? console.log;
 
   const npcInput = args.join(" ");
@@ -41,33 +56,55 @@ async function runTalkCommand(
     npcInput
   });
 
-  log(result.message);
-
   if (!result.success) {
+    log(result.message);
     return;
   }
 
-  const world = loadWorldService();
-  const eventServices =
-    getEventServicesService();
-
-  const narrationResult =
-    await presentationPipeline.present({
-      player,
-      world,
-      playerInput:
-        `I talk to ${npcInput}.`,
-      eventHistory:
-        eventServices?.eventHistory ?? null,
-      mode: "narrate_action",
-      instructions: {
-        preservePlayerAgency: true,
-        useOnlyProvidedFacts: true
-      }
+  const commandNarrationService =
+    services.commandNarrationService ??
+    new CommandNarrationService({
+      loadWorld: loadWorldService,
+      getEventServices:
+        getEventServicesService,
+      presentationPipeline
     });
 
-  log("");
-  log(narrationResult.narration);
+  const presentationMode =
+    services.presentationMode ??
+    configLoader().presentationMode;
+
+  const presentationPolicy =
+    services.presentationPolicy ??
+    new PresentationPolicy({
+      mode: presentationMode
+    });
+
+  await presentationPolicy.present({
+    createNarration() {
+      return commandNarrationService
+        .createNarration({
+          player,
+          playerInput:
+            `I talk to ${npcInput}.`,
+          mode: "narrate_action",
+          instructions: {
+            preservePlayerAgency: true,
+            useOnlyProvidedFacts: true
+          }
+        });
+    },
+
+    renderNarration(narrationResult) {
+      log(result.message);
+      log("");
+      log(narrationResult.narration);
+    },
+
+    renderFallback() {
+      log(result.message);
+    }
+  });
 }
 
 module.exports = {

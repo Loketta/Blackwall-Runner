@@ -69,6 +69,16 @@ function createPipeline(tracker = {}) {
           source: "test",
           proposedAction: null
         });
+      },
+
+      getMetrics() {
+        tracker.metricsRequested = true;
+
+        return Object.freeze({
+          requests: 3,
+          generated: 2,
+          cached: 1
+        });
       }
     }
   });
@@ -247,6 +257,26 @@ async function runTests() {
   );
 
   await test(
+    "Returns narration metrics",
+    () => {
+      const tracker = {};
+      const pipeline = createPipeline(tracker);
+
+      const metrics = pipeline.getMetrics();
+
+      assert.strictEqual(
+        tracker.metricsRequested,
+        true
+      );
+      assert.deepStrictEqual(metrics, {
+        requests: 3,
+        generated: 2,
+        cached: 1
+      });
+    }
+  );
+
+  await test(
     "Rejects an invalid AI context builder",
     () => {
       assert.throws(
@@ -296,6 +326,26 @@ async function runTests() {
           narrator: {}
         }),
         /narrator must provide a narrate function/
+      );
+    }
+  );
+
+  await test(
+    "Rejects a narrator without metrics",
+    () => {
+      assert.throws(
+        () => new PresentationPipeline({
+          aiContextBuilder: {
+            build() {}
+          },
+          narrativeContextBuilder: {
+            build() {}
+          },
+          narrator: {
+            narrate() {}
+          }
+        }),
+        /narrator must provide a getMetrics function/
       );
     }
   );

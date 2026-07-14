@@ -88,6 +88,8 @@ function createServices(tracker = {}) {
       return eventServices;
     },
 
+    presentationMode: "player",
+
     presentationPipeline: {
       async present(options) {
         tracker.presentationOptions = options;
@@ -306,6 +308,8 @@ async function runTests() {
             };
           },
 
+          presentationMode: "player",
+
           presentationPipeline: {
             async present() {
               await Promise.resolve();
@@ -328,6 +332,73 @@ async function runTests() {
         [
           "",
           "Asynchronous movement narration."
+        ]
+      );
+    }
+  );
+
+  await test(
+    "Uses fallback output in developer mode",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationMode =
+        "developer";
+
+      await runMoveCommand(
+        createPlayer(),
+        ["safehouse"],
+        services
+      );
+
+      assert.strictEqual(
+        tracker.presentationWasCalled,
+        undefined
+      );
+
+      assert.strictEqual(
+        tracker.worldWasLoaded,
+        undefined
+      );
+
+      assert.strictEqual(
+        tracker.describedLocation,
+        services.expected.location
+      );
+    }
+  );
+
+  await test(
+    "Falls back when movement narration fails",
+    async () => {
+      const tracker = {};
+      const services = createServices(tracker);
+
+      services.presentationPipeline = {
+        async present() {
+          throw new Error(
+            "Narration service unavailable."
+          );
+        }
+      };
+
+      await runMoveCommand(
+        createPlayer(),
+        ["safehouse"],
+        services
+      );
+
+      assert.strictEqual(
+        tracker.describedLocation,
+        services.expected.location
+      );
+
+      assert.deepStrictEqual(
+        tracker.logMessages,
+        [
+          "You move to Safehouse 1.",
+          ""
         ]
       );
     }
@@ -367,6 +438,8 @@ async function runTests() {
             tracker.worldWasLoaded = true;
             return {};
           },
+
+          presentationMode: "player",
 
           presentationPipeline: {
             async present() {

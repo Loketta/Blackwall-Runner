@@ -12,6 +12,11 @@ const {
   "../../game/presentation/createPresentationPipeline"
 );
 const {
+  CommandNarrationService
+} = require(
+  "../../game/presentation/commandNarrationService"
+);
+const {
   PresentationPolicy
 } = require(
   "../../game/presentation/presentationPolicy"
@@ -46,6 +51,16 @@ async function runLookCommand(
     defaultPresentationPipeline;
   const configLoader =
     services.configLoader ?? loadRuntimeConfig;
+
+  const commandNarrationService =
+    services.commandNarrationService ??
+    new CommandNarrationService({
+      loadWorld: loadWorldService,
+      getEventServices:
+        getEventServicesService,
+      presentationPipeline
+    });
+
   const log = services.log ?? console.log;
 
   const result = performActionService(player, {
@@ -68,23 +83,17 @@ async function runLookCommand(
     });
 
   await presentationPolicy.present({
-    async createNarration() {
-      const world = loadWorldService();
-      const eventServices =
-        getEventServicesService();
-
-      return presentationPipeline.present({
-        player,
-        world,
-        playerInput: "I look around.",
-        eventHistory:
-          eventServices?.eventHistory ?? null,
-        mode: "describe_location",
-        instructions: {
-          preservePlayerAgency: true,
-          useOnlyProvidedFacts: true
-        }
-      });
+    createNarration() {
+      return commandNarrationService
+        .createNarration({
+          player,
+          playerInput: "I look around.",
+          mode: "describe_location",
+          instructions: {
+            preservePlayerAgency: true,
+            useOnlyProvidedFacts: true
+          }
+        });
     },
 
     renderNarration(narrationResult) {
