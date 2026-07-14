@@ -20,6 +20,7 @@ function createInteractiveCli({
   input = process.stdin,
   output = process.stdout,
   log = console.log,
+  clearTerminal = console.clear,
   createInterface = readline.createInterface
 }) {
   if (typeof handleCommand !== "function") {
@@ -37,38 +38,45 @@ function createInteractiveCli({
     );
   }
 
+  if (typeof clearTerminal !== "function") {
+    throw new TypeError(
+      "clearTerminal must be a function."
+    );
+  }
+
   if (typeof createInterface !== "function") {
     throw new TypeError(
       "createInterface must be a function."
     );
   }
 
-  const interfaceInstance =
-    createInterface({
-      input,
-      output,
-      prompt: "> "
-    });
+  const interfaceInstance = createInterface({
+    input,
+    output,
+    prompt: "> "
+  });
 
   async function processLine(line) {
-    const {
-      command,
-      args
-    } = parseCommandLine(line);
+    const { command, args } = parseCommandLine(line);
 
     if (!command) {
       interfaceInstance.prompt();
       return;
     }
 
-    const normalisedCommand =
-      command.toLowerCase();
+    const normalisedCommand = command.toLowerCase();
 
     if (
       normalisedCommand === "quit" ||
       normalisedCommand === "exit"
     ) {
       interfaceInstance.close();
+      return;
+    }
+
+    if (normalisedCommand === "clear") {
+      clearTerminal();
+      interfaceInstance.prompt();
       return;
     }
 

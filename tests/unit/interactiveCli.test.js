@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("assert");
+
 const {
   createInteractiveCli,
   parseCommandLine
@@ -25,6 +26,7 @@ async function test(name, testFunction) {
 
 function createInterfaceStub() {
   const handlers = {};
+
   const tracker = {
     promptCount: 0,
     closeCount: 0
@@ -33,7 +35,6 @@ function createInterfaceStub() {
   return {
     handlers,
     tracker,
-
     interfaceInstance: {
       on(eventName, handler) {
         handlers[eventName] = handler;
@@ -85,7 +86,7 @@ async function runTests() {
     "Parses blank input",
     async () => {
       assert.deepStrictEqual(
-        parseCommandLine("   "),
+        parseCommandLine(" "),
         {
           command: "",
           args: []
@@ -98,8 +99,7 @@ async function runTests() {
     "Uses one shared service container",
     async () => {
       const calls = [];
-      const interfaceStub =
-        createInterfaceStub();
+      const interfaceStub = createInterfaceStub();
 
       const applicationServices = {
         presentationPipeline: {
@@ -158,8 +158,7 @@ async function runTests() {
     "Normalises command names",
     async () => {
       const calls = [];
-      const interfaceStub =
-        createInterfaceStub();
+      const interfaceStub = createInterfaceStub();
 
       const cli = createInteractiveCli({
         async handleCommand(command, args) {
@@ -198,8 +197,7 @@ async function runTests() {
     "Ignores blank input",
     async () => {
       let commandCount = 0;
-      const interfaceStub =
-        createInterfaceStub();
+      const interfaceStub = createInterfaceStub();
 
       const cli = createInteractiveCli({
         async handleCommand() {
@@ -218,7 +216,7 @@ async function runTests() {
       cli.start();
 
       await interfaceStub.handlers.line(
-        "   "
+        " "
       );
 
       assert.strictEqual(
@@ -231,8 +229,7 @@ async function runTests() {
   await test(
     "Closes on quit",
     async () => {
-      const interfaceStub =
-        createInterfaceStub();
+      const interfaceStub = createInterfaceStub();
 
       const cli = createInteractiveCli({
         async handleCommand() {},
@@ -260,11 +257,61 @@ async function runTests() {
   );
 
   await test(
+    "Handles clear locally",
+    async () => {
+      let commandCount = 0;
+      let clearCount = 0;
+      const interfaceStub = createInterfaceStub();
+
+      const cli = createInteractiveCli({
+        async handleCommand() {
+          commandCount += 1;
+        },
+
+        applicationServices: {},
+
+        log() {},
+
+        clearTerminal() {
+          clearCount += 1;
+        },
+
+        createInterface() {
+          return interfaceStub.interfaceInstance;
+        }
+      });
+
+      cli.start();
+
+      const promptCountBeforeClear =
+        interfaceStub.tracker.promptCount;
+
+      await interfaceStub.handlers.line(
+        "ClEaR"
+      );
+
+      assert.strictEqual(
+        clearCount,
+        1
+      );
+
+      assert.strictEqual(
+        commandCount,
+        0
+      );
+
+      assert.strictEqual(
+        interfaceStub.tracker.promptCount,
+        promptCountBeforeClear + 1
+      );
+    }
+  );
+
+  await test(
     "Prints command failures and continues",
     async () => {
       const messages = [];
-      const interfaceStub =
-        createInterfaceStub();
+      const interfaceStub = createInterfaceStub();
 
       const cli = createInteractiveCli({
         async handleCommand() {
