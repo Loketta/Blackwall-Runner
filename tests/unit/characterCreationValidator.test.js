@@ -20,12 +20,16 @@ function test(name, callback) {
 }
 
 function createDraft() {
-  return createCharacterDraft({
+  const draft = createCharacterDraft({
     id: "draft-1",
     ownerId: "discord-user-1",
     platform: "discord",
     worldId: "development-world"
   });
+
+  draft.profession = "medic";
+
+  return draft;
 }
 
 function createValidDraft() {

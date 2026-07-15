@@ -10,6 +10,10 @@ const {
   SKILL_CREATION_RULES
 } = require("./skillDefinitions");
 
+const {
+  validateProfessionSelection
+} = require("./professionSelectionValidator");
+
 function createError(field, code, message) {
   return {
     field,
@@ -228,6 +232,13 @@ function validateCharacterDraft(draft) {
 
   validateAttributes(draft.attributes, errors);
   validateSkills(draft.skills, errors);
+
+  const professionResult = validateProfessionSelection(
+    draft.profession,
+    draft.professionChoices
+  );
+
+  errors.push(...professionResult.errors);
 
   return {
     valid: errors.length === 0,
