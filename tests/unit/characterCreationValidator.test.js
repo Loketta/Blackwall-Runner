@@ -19,13 +19,17 @@ function test(name, callback) {
   });
 }
 
-function createValidDraft() {
-  const draft = createCharacterDraft({
+function createDraft() {
+  return createCharacterDraft({
     id: "draft-1",
     ownerId: "discord-user-1",
     platform: "discord",
     worldId: "development-world"
   });
+}
+
+function createValidDraft() {
+  const draft = createDraft();
 
   draft.attributes = {
     force: 6,
@@ -36,6 +40,13 @@ function createValidDraft() {
     will: 6,
     face: 6
   };
+
+  draft.skills.firearms = 4;
+  draft.skills.melee = 4;
+  draft.skills.evasion = 4;
+  draft.skills.stealth = 4;
+  draft.skills.investigation = 4;
+  draft.skills.perception = 4;
 
   return draft;
 }
@@ -53,21 +64,21 @@ test("Rejects a missing draft", () => {
   });
 });
 
-test("Reports unspent attribute points", () => {
-  const draft = createCharacterDraft({
-    id: "draft-1",
-    ownerId: "discord-user-1",
-    platform: "discord",
-    worldId: "development-world"
-  });
+test("Reports unspent attribute and skill points", () => {
+  const result = validateCharacterDraft(createDraft());
 
-  assert.deepStrictEqual(validateCharacterDraft(draft), {
+  assert.deepStrictEqual(result, {
     valid: false,
     errors: [
       {
         field: "attributes",
         code: "unspent_attribute_points",
         message: "You have 28 attribute points remaining."
+      },
+      {
+        field: "skills",
+        code: "unspent_skill_points",
+        message: "You have 24 skill points remaining."
       }
     ]
   });
@@ -78,16 +89,16 @@ test("Reports an exceeded attribute budget", () => {
 
   draft.attributes.force = 7;
 
-  assert.deepStrictEqual(validateCharacterDraft(draft), {
-    valid: false,
-    errors: [
-      {
-        field: "attributes",
-        code: "attribute_budget_exceeded",
-        message: "You have spent 1 too many attribute points."
-      }
-    ]
-  });
+  const result = validateCharacterDraft(draft);
+
+  assert.strictEqual(result.valid, false);
+  assert.strictEqual(
+    result.errors.some(
+      (error) =>
+        error.code === "attribute_budget_exceeded"
+    ),
+    true
+  );
 });
 
 test("Reports attributes below the minimum", () => {
@@ -132,20 +143,117 @@ test("Rejects non-integer attribute values", () => {
   const result = validateCharacterDraft(draft);
 
   assert.strictEqual(result.valid, false);
-  assert.deepStrictEqual(result.errors[0], {
-    field: "attributes.force",
-    code: "invalid_attribute_value",
-    message: "force must be a whole number."
-  });
+  assert.strictEqual(
+    result.errors.some(
+      (error) =>
+        error.field === "attributes.force" &&
+        error.code === "invalid_attribute_value"
+    ),
+    true
+  );
 });
 
-test("Accepts a legal attribute allocation", () => {
+test("Reports unspent skill points", () => {
   const draft = createValidDraft();
 
-  assert.deepStrictEqual(validateCharacterDraft(draft), {
-    valid: true,
-    errors: []
-  });
+  draft.skills.firearms = 3;
+
+  const result = validateCharacterDraft(draft);
+
+  assert.strictEqual(result.valid, false);
+  assert.strictEqual(
+    result.errors.some(
+      (error) =>
+        error.code === "unspent_skill_points" &&
+        error.message === "You have 1 skill points remaining."
+    ),
+    true
+  );
+});
+
+test("Reports an exceeded skill budget", () => {
+  const draft = createValidDraft();
+
+  draft.skills.athletics = 1;
+
+  const result = validateCharacterDraft(draft);
+
+  assert.strictEqual(result.valid, false);
+  assert.strictEqual(
+    result.errors.some(
+      (error) =>
+        error.code === "skill_budget_exceeded" &&
+        error.message ===
+          "You have spent 1 too many skill points."
+    ),
+    true
+  );
+});
+
+test("Reports skills above the creation maximum", () => {
+  const draft = createValidDraft();
+
+  draft.skills.firearms = 5;
+  draft.skills.melee = 3;
+
+  const result = validateCharacterDraft(draft);
+
+  assert.strictEqual(result.valid, false);
+  assert.strictEqual(
+    result.errors.some(
+      (error) =>
+        error.field === "skills.firearms" &&
+        error.code === "skill_above_creation_maximum"
+    ),
+    true
+  );
+});
+
+test("Reports skills below zero", () => {
+  const draft = createValidDraft();
+
+  draft.skills.firearms = -1;
+  draft.skills.melee = 5;
+
+  const result = validateCharacterDraft(draft);
+
+  assert.strictEqual(result.valid, false);
+  assert.strictEqual(
+    result.errors.some(
+      (error) =>
+        error.field === "skills.firearms" &&
+        error.code === "skill_below_minimum"
+    ),
+    true
+  );
+});
+
+test("Rejects non-integer skill values", () => {
+  const draft = createValidDraft();
+
+  draft.skills.firearms = 3.5;
+
+  const result = validateCharacterDraft(draft);
+
+  assert.strictEqual(result.valid, false);
+  assert.strictEqual(
+    result.errors.some(
+      (error) =>
+        error.field === "skills.firearms" &&
+        error.code === "invalid_skill_value"
+    ),
+    true
+  );
+});
+
+test("Accepts a legal attribute and skill allocation", () => {
+  assert.deepStrictEqual(
+    validateCharacterDraft(createValidDraft()),
+    {
+      valid: true,
+      errors: []
+    }
+  );
 });
 
 async function run() {

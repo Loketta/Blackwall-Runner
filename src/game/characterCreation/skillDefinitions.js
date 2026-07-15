@@ -9,6 +9,14 @@ const SKILL_DEFINITION_STATUS = Object.freeze({
   PROVISIONAL: "provisional"
 });
 
+const SKILL_CREATION_RULES = Object.freeze({
+  minimum: 0,
+  maximum: 4,
+  totalBudget: 24,
+  untrainedAllowed: true,
+  untrainedRollMode: "disadvantage"
+});
+
 const SKILL_CATEGORIES = Object.freeze({
   COMBAT: "combat",
   RANGED_ATTACK: "ranged_attack",
@@ -451,6 +459,7 @@ function getSkillDefinition(skillId) {
 
 module.exports = {
   SKILL_DEFINITION_STATUS,
+  SKILL_CREATION_RULES,
   SKILL_CATEGORIES,
   SKILL_DEFINITIONS,
   getSkillDefinitions,

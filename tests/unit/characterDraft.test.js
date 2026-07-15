@@ -3,8 +3,13 @@
 const assert = require("assert");
 
 const {
+  SKILL_DEFINITIONS
+} = require("../../src/game/characterCreation/skillDefinitions");
+
+const {
   CHARACTER_DRAFT_STATUS,
   createStartingAttributes,
+  createStartingSkills,
   createCharacterDraft
 } = require("../../src/game/characterCreation/characterDraft");
 
@@ -29,6 +34,20 @@ test("Creates attributes at the creation minimum", () => {
   });
 });
 
+test("Creates every skill at zero", () => {
+  const skills = createStartingSkills();
+
+  assert.strictEqual(
+    Object.keys(skills).length,
+    SKILL_DEFINITIONS.length
+  );
+
+  assert.strictEqual(
+    Object.values(skills).every((value) => value === 0),
+    true
+  );
+});
+
 test("Creates an in-progress character draft", () => {
   const draft = createCharacterDraft({
     id: "draft-1",
@@ -37,32 +56,35 @@ test("Creates an in-progress character draft", () => {
     worldId: "development-world"
   });
 
-  assert.deepStrictEqual(draft, {
-    id: "draft-1",
-    ownerId: "discord-user-1",
-    platform: "discord",
-    worldId: "development-world",
-    definitionVersion: 1,
-    revision: 0,
-    status: CHARACTER_DRAFT_STATUS.IN_PROGRESS,
-    currentStage: "identity",
-    identity: {
-      name: null
-    },
-    attributes: {
-      force: 2,
-      agility: 2,
-      dexterity: 2,
-      intellect: 2,
-      awareness: 2,
-      will: 2,
-      face: 2
-    },
-    skills: {},
-    profession: null,
-    professionChoices: {},
-    completedStages: []
+  assert.strictEqual(draft.id, "draft-1");
+  assert.strictEqual(draft.ownerId, "discord-user-1");
+  assert.strictEqual(draft.platform, "discord");
+  assert.strictEqual(draft.worldId, "development-world");
+  assert.strictEqual(draft.definitionVersion, 1);
+  assert.strictEqual(draft.revision, 0);
+  assert.strictEqual(
+    draft.status,
+    CHARACTER_DRAFT_STATUS.IN_PROGRESS
+  );
+  assert.strictEqual(draft.currentStage, "identity");
+
+  assert.deepStrictEqual(draft.identity, {
+    name: null
   });
+
+  assert.deepStrictEqual(
+    draft.attributes,
+    createStartingAttributes()
+  );
+
+  assert.deepStrictEqual(
+    draft.skills,
+    createStartingSkills()
+  );
+
+  assert.strictEqual(draft.profession, null);
+  assert.deepStrictEqual(draft.professionChoices, {});
+  assert.deepStrictEqual(draft.completedStages, []);
 });
 
 test("Rejects missing ownership information", () => {
@@ -85,6 +107,15 @@ test("Creates independent attribute objects", () => {
   first.force = 8;
 
   assert.strictEqual(second.force, 2);
+});
+
+test("Creates independent skill objects", () => {
+  const first = createStartingSkills();
+  const second = createStartingSkills();
+
+  first.firearms = 4;
+
+  assert.strictEqual(second.firearms, 0);
 });
 
 async function run() {

@@ -6,6 +6,11 @@ const {
   CHARACTER_CREATION_STAGES
 } = require("./characterCreationDefinition");
 
+const {
+  SKILL_DEFINITIONS,
+  SKILL_CREATION_RULES
+} = require("./skillDefinitions");
+
 const CHARACTER_DRAFT_STATUS = Object.freeze({
   IN_PROGRESS: "in_progress",
   FINALISED: "finalised",
@@ -29,6 +34,15 @@ function createStartingAttributes() {
   );
 }
 
+function createStartingSkills() {
+  return Object.fromEntries(
+    SKILL_DEFINITIONS.map((skill) => [
+      skill.id,
+      SKILL_CREATION_RULES.minimum
+    ])
+  );
+}
+
 function createCharacterDraft({
   id,
   ownerId,
@@ -48,7 +62,7 @@ function createCharacterDraft({
       name: null
     },
     attributes: createStartingAttributes(),
-    skills: {},
+    skills: createStartingSkills(),
     profession: null,
     professionChoices: {},
     completedStages: []
@@ -58,5 +72,6 @@ function createCharacterDraft({
 module.exports = {
   CHARACTER_DRAFT_STATUS,
   createStartingAttributes,
+  createStartingSkills,
   createCharacterDraft
 };

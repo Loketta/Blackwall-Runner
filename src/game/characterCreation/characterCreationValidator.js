@@ -5,6 +5,11 @@ const {
   ATTRIBUTE_RULES
 } = require("./characterCreationDefinition");
 
+const {
+  SKILL_DEFINITIONS,
+  SKILL_CREATION_RULES
+} = require("./skillDefinitions");
+
 function createError(field, code, message) {
   return {
     field,
@@ -118,6 +123,99 @@ function validateAttributes(attributes, errors) {
   }
 }
 
+function validateSkills(skills, errors) {
+  if (
+    !skills ||
+    typeof skills !== "object" ||
+    Array.isArray(skills)
+  ) {
+    errors.push(
+      createError(
+        "skills",
+        "missing_skills",
+        "Skills are required."
+      )
+    );
+
+    return;
+  }
+
+  let total = 0;
+  let canCalculateTotal = true;
+
+  for (const skill of SKILL_DEFINITIONS) {
+    const value = skills[skill.id];
+    const field = `skills.${skill.id}`;
+
+    if (!Number.isInteger(value)) {
+      errors.push(
+        createError(
+          field,
+          "invalid_skill_value",
+          `${skill.name} must be a whole number.`
+        )
+      );
+
+      canCalculateTotal = false;
+      continue;
+    }
+
+    total += value;
+
+    if (value < SKILL_CREATION_RULES.minimum) {
+      errors.push(
+        createError(
+          field,
+          "skill_below_minimum",
+          `${skill.name} cannot be lower than ${
+            SKILL_CREATION_RULES.minimum
+          } during character creation.`
+        )
+      );
+    }
+
+    if (value > SKILL_CREATION_RULES.maximum) {
+      errors.push(
+        createError(
+          field,
+          "skill_above_creation_maximum",
+          `${skill.name} cannot be higher than ${
+            SKILL_CREATION_RULES.maximum
+          } during character creation.`
+        )
+      );
+    }
+  }
+
+  if (!canCalculateTotal) {
+    return;
+  }
+
+  if (total < SKILL_CREATION_RULES.totalBudget) {
+    errors.push(
+      createError(
+        "skills",
+        "unspent_skill_points",
+        `You have ${
+          SKILL_CREATION_RULES.totalBudget - total
+        } skill points remaining.`
+      )
+    );
+  }
+
+  if (total > SKILL_CREATION_RULES.totalBudget) {
+    errors.push(
+      createError(
+        "skills",
+        "skill_budget_exceeded",
+        `You have spent ${
+          total - SKILL_CREATION_RULES.totalBudget
+        } too many skill points.`
+      )
+    );
+  }
+}
+
 function validateCharacterDraft(draft) {
   const errors = [];
 
@@ -129,6 +227,7 @@ function validateCharacterDraft(draft) {
   }
 
   validateAttributes(draft.attributes, errors);
+  validateSkills(draft.skills, errors);
 
   return {
     valid: errors.length === 0,
