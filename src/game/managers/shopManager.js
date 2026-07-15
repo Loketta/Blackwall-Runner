@@ -1,15 +1,55 @@
+"use strict";
+
+const fs = require("fs");
 const path = require("path");
 const {
   createJsonCollectionRepository
 } = require("../repositories/jsonCollectionRepository");
+const {
+  getShopStateFilePath
+} = require("../world/shopStatePaths");
 
-const shopRepository = createJsonCollectionRepository({
-  filePath: path.join(
-    __dirname,
-    "../../../data/Shops/shops.json"
-  ),
-  indentation: 2
+const defaultSavesDirectory = path.resolve(
+  __dirname,
+  "../../../saves"
+);
+
+const savesDirectory =
+  process.env.BLACKWALL_SAVES_DIRECTORY ||
+  defaultSavesDirectory;
+
+const shopStatePath = getShopStateFilePath({
+  savesDirectory
 });
+
+const shopTemplatePath = path.resolve(
+  __dirname,
+  "../../../data/Shops/shops.json"
+);
+
+function seedShopStateIfMissing() {
+  if (fs.existsSync(shopStatePath)) {
+    return;
+  }
+
+  fs.mkdirSync(
+    path.dirname(shopStatePath),
+    { recursive: true }
+  );
+
+  fs.copyFileSync(
+    shopTemplatePath,
+    shopStatePath
+  );
+}
+
+seedShopStateIfMissing();
+
+const shopRepository =
+  createJsonCollectionRepository({
+    filePath: shopStatePath,
+    indentation: 2
+  });
 
 function loadShops() {
   return shopRepository.loadAll();
