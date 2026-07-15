@@ -96,7 +96,7 @@ test("Accepts a complete Operator draft", () => {
   const draft = createMechanicallyValidDraft();
 
   draft.profession = "operator";
-  draft.professionChoices.weapon_type = "pistol";
+  draft.professionChoices.weapon_type = "pistols";
 
   assert.deepStrictEqual(
     validateCharacterDraft(draft),
@@ -111,7 +111,7 @@ test("Rejects choices belonging to another profession", () => {
   const draft = createMechanicallyValidDraft();
 
   draft.profession = "medic";
-  draft.professionChoices.weapon_type = "pistol";
+  draft.professionChoices.weapon_type = "pistols";
 
   const result = validateCharacterDraft(draft);
 

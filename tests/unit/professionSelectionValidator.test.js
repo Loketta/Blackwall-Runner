@@ -78,7 +78,7 @@ test("Rejects irrelevant profession choices", () => {
   const result = validateProfessionSelection(
     "medic",
     {
-      weapon_type: "pistol"
+      weapon_type: "pistols"
     }
   );
 
@@ -129,12 +129,34 @@ test("Rejects an empty Operator weapon type", () => {
   );
 });
 
-test("Accepts an Operator weapon type", () => {
+test("Rejects an unknown Operator weapon type", () => {
   assert.deepStrictEqual(
     validateProfessionSelection(
       "operator",
       {
-        weapon_type: "pistol"
+        weapon_type: "laser_swords"
+      }
+    ),
+    {
+      valid: false,
+      errors: [
+        {
+          field: "professionChoices.weapon_type",
+          code: "unknown_weapon_type",
+          message:
+            "Unknown weapon type: laser_swords"
+        }
+      ]
+    }
+  );
+});
+
+test("Accepts a controlled Operator weapon type", () => {
+  assert.deepStrictEqual(
+    validateProfessionSelection(
+      "operator",
+      {
+        weapon_type: "sniper_rifles"
       }
     ),
     {

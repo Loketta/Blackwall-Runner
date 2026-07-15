@@ -1,8 +1,13 @@
 "use strict";
 
 const {
+  PROFESSION_CHOICE_TYPE,
   getProfessionDefinition
 } = require("./professionDefinitions");
+
+const {
+  getWeaponTypeDefinition
+} = require("./weaponTypeDefinitions");
 
 function createError(field, code, message) {
   return {
@@ -12,16 +17,61 @@ function createError(field, code, message) {
   };
 }
 
+function isNonEmptyString(value) {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0
+  );
+}
+
+function validateWeaponTypeChoice(
+  profession,
+  choice,
+  value,
+  errors
+) {
+  if (!isNonEmptyString(value)) {
+    return;
+  }
+
+  const normalisedValue = value.trim();
+
+  if (!getWeaponTypeDefinition(normalisedValue)) {
+    errors.push(
+      createError(
+        `professionChoices.${choice.id}`,
+        "unknown_weapon_type",
+        `Unknown weapon type: ${normalisedValue}`
+      )
+    );
+  }
+}
+
+function validateChoiceValue(
+  profession,
+  choice,
+  value,
+  errors
+) {
+  if (
+    choice.type === PROFESSION_CHOICE_TYPE.WEAPON_TYPE
+  ) {
+    validateWeaponTypeChoice(
+      profession,
+      choice,
+      value,
+      errors
+    );
+  }
+}
+
 function validateProfessionSelection(
   professionId,
   professionChoices
 ) {
   const errors = [];
 
-  if (
-    typeof professionId !== "string" ||
-    professionId.trim().length === 0
-  ) {
+  if (!isNonEmptyString(professionId)) {
     errors.push(
       createError(
         "profession",
@@ -36,8 +86,10 @@ function validateProfessionSelection(
     };
   }
 
+  const normalisedProfessionId = professionId.trim();
+
   const profession = getProfessionDefinition(
-    professionId.trim()
+    normalisedProfessionId
   );
 
   if (!profession) {
@@ -45,7 +97,7 @@ function validateProfessionSelection(
       createError(
         "profession",
         "unknown_profession",
-        `Unknown profession: ${professionId}`
+        `Unknown profession: ${normalisedProfessionId}`
       )
     );
 
@@ -97,10 +149,7 @@ function validateProfessionSelection(
 
     if (
       choice.required &&
-      (
-        typeof value !== "string" ||
-        value.trim().length === 0
-      )
+      !isNonEmptyString(value)
     ) {
       errors.push(
         createError(
@@ -109,7 +158,16 @@ function validateProfessionSelection(
           `${profession.name} requires a ${choice.id} selection.`
         )
       );
+
+      continue;
     }
+
+    validateChoiceValue(
+      profession,
+      choice,
+      value,
+      errors
+    );
   }
 
   return {
