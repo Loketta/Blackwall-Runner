@@ -16,6 +16,8 @@ const CHARACTER_CREATION_ACTION = Object.freeze({
     "character_creation:cancel"
 });
 
+const SKILL_ACTION_PREFIX =
+  "character_creation:skill:";
 const ATTRIBUTE_ACTION_PREFIX =
   "character_creation:attribute:";
 const CHARACTER_NAME_INPUT_ID =
@@ -66,6 +68,51 @@ function requireNonEmptyString(
   return value.trim();
 }
 
+function parseSkillAction(
+  customId
+) {
+  if (
+    typeof customId !== "string" ||
+    !customId.startsWith(
+      SKILL_ACTION_PREFIX
+    )
+  ) {
+    return null;
+  }
+
+  const remainder =
+    customId.slice(
+      SKILL_ACTION_PREFIX.length
+    );
+
+  const parts =
+    remainder.split(":");
+
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const [
+    skillId,
+    direction
+  ] = parts;
+
+  if (
+    skillId.trim() === "" ||
+    (
+      direction !== "increase" &&
+      direction !== "decrease"
+    )
+  ) {
+    return null;
+  }
+
+  return Object.freeze({
+    skillId:
+      skillId.trim(),
+    direction
+  });
+}
 function parseAttributeAction(
   customId
 ) {
@@ -341,6 +388,82 @@ function createDiscordCharacterCreationRouter({
     });
   }
 
+  async function handleSkillAction(
+    interaction,
+    action
+  ) {
+    const identity =
+      createInteractionIdentity(
+        interaction
+      );
+
+    const session =
+      requireSession(
+        sessionRegistry,
+        identity
+      );
+
+    requireFunction(
+      session.getCurrentView,
+      "session.getCurrentView"
+    );
+
+    requireFunction(
+      session.setSkill,
+      "session.setSkill"
+    );
+
+    const currentView =
+      session.getCurrentView();
+
+    if (
+      currentView.stage !==
+        "skills"
+    ) {
+      throw new Error(
+        "Skill controls are only available during the skills stage"
+      );
+    }
+
+    const currentValue =
+      currentView.values?.[
+        action.skillId
+      ];
+
+    if (!Number.isInteger(currentValue)) {
+      throw new Error(
+        `Skill ${action.skillId} is not available in the current view`
+      );
+    }
+
+    const nextValue =
+      action.direction === "increase"
+        ? currentValue + 1
+        : currentValue - 1;
+
+    const view =
+      session.setSkill({
+        skillId:
+          action.skillId,
+        value: nextValue
+      });
+
+    await interaction.update(
+      renderView(view)
+    );
+
+    return Object.freeze({
+      handled: true,
+      action:
+        action.direction === "increase"
+          ? "increase_skill"
+          : "decrease_skill",
+      skillId:
+        action.skillId,
+      value: nextValue,
+      view
+    });
+  }
   async function handleAttributeAction(
     interaction,
     action
@@ -588,6 +711,22 @@ function createDiscordCharacterCreationRouter({
           attributeAction
         );
       }
+      const skillAction =
+        parseSkillAction(
+          interaction.customId
+        );
+
+      if (skillAction) {
+        requireFunction(
+          interaction.update,
+          "interaction.update"
+        );
+
+        return handleSkillAction(
+          interaction,
+          skillAction
+        );
+      }
 
             if (
         interaction.customId ===
@@ -657,11 +796,13 @@ if (
 }
 
 module.exports = {
-  ATTRIBUTE_ACTION_PREFIX,
+    SKILL_ACTION_PREFIX,
+ATTRIBUTE_ACTION_PREFIX,
   CHARACTER_CREATION_ACTION,
   CHARACTER_NAME_INPUT_ID,
   CREATE_CHARACTER_COMMAND,
   createDiscordCharacterCreationRouter,
   createInteractionIdentity,
-  parseAttributeAction
+  parseAttributeAction,
+  parseSkillAction
 };

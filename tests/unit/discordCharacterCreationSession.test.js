@@ -61,6 +61,29 @@ function createControllerHarness() {
         }
       }
     );
+  const skillView =
+    createView(
+      "skills",
+      {
+        stageNumber: 3,
+        canMovePrevious: true,
+        values: {
+          computers: 3
+        }
+      }
+    );
+
+  const updatedSkillView =
+    createView(
+      "skills",
+      {
+        stageNumber: 3,
+        canMovePrevious: true,
+        values: {
+          computers: 4
+        }
+      }
+    );
 
   const reviewView =
     createView(
@@ -125,6 +148,16 @@ function createControllerHarness() {
       ) {
         currentView =
           updatedAttributeView;
+      }
+
+      if (
+        currentView.stage ===
+          "skills" &&
+        input.skillId === "computers" &&
+        input.value === 4
+      ) {
+        currentView =
+          updatedSkillView;
       }
 
       return currentView;
@@ -192,10 +225,15 @@ function createControllerHarness() {
       nameView,
       attributeView,
       updatedAttributeView,
+      skillView,
+      updatedSkillView,
       reviewView,
       finishedView
     },
 
+    moveToSkills() {
+      currentView = skillView;
+    },
     moveToReview() {
       currentView = reviewView;
     }
@@ -484,6 +522,116 @@ test(
         session.setAttribute({
           attributeId: "force",
           value: 5.5
+        }),
+      /value must be an integer/
+    );
+  }
+);
+test(
+  "Updates a skill through the controller",
+  () => {
+    const {
+      session,
+      controllerHarness
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    controllerHarness.moveToSkills();
+
+    session.getCurrentView();
+
+    const view =
+      session.setSkill({
+        skillId: "computers",
+        value: 4
+      });
+
+    assert.strictEqual(
+      view.stage,
+      "skills"
+    );
+
+    assert.strictEqual(
+      view.values.computers,
+      4
+    );
+
+    const submitCall =
+      controllerHarness.calls.find(
+        (call) =>
+          call.method === "submit" &&
+          call.input.skillId ===
+            "computers"
+      );
+
+    assert.deepStrictEqual(
+      submitCall,
+      {
+        method: "submit",
+        input: {
+          skillId: "computers",
+          value: 4
+        }
+      }
+    );
+  }
+);
+
+test(
+  "Rejects skill updates outside the skills stage",
+  () => {
+    const {
+      session
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    assert.throws(
+      () =>
+        session.setSkill({
+          skillId: "computers",
+          value: 4
+        }),
+      /only be updated during the skills stage/
+    );
+  }
+);
+
+test(
+  "Requires valid skill update input",
+  () => {
+    const {
+      session,
+      controllerHarness
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    controllerHarness.moveToSkills();
+
+    session.getCurrentView();
+
+    assert.throws(
+      () =>
+        session.setSkill({
+          skillId: "",
+          value: 4
+        }),
+      /skillId must be a non-empty string/
+    );
+
+    assert.throws(
+      () =>
+        session.setSkill({
+          skillId: "computers",
+          value: 4.5
         }),
       /value must be an integer/
     );

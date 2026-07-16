@@ -202,6 +202,39 @@ function createDiscordCharacterCreationSession({
 
     return currentView;
   }
+  function setSkill({
+    skillId,
+    value
+  }) {
+    requireStarted();
+
+    if (currentView.stage !== "skills") {
+      throw new Error(
+        "Skills can only be updated during the skills stage."
+      );
+    }
+
+    const normalisedSkillId =
+      requireNonEmptyString(
+        skillId,
+        "skillId"
+      );
+
+    if (!Number.isInteger(value)) {
+      throw new TypeError(
+        "value must be an integer."
+      );
+    }
+
+    currentView =
+      controller.submit({
+        skillId:
+          normalisedSkillId,
+        value
+      });
+
+    return currentView;
+  }
   function previous() {
     requireStarted();
 
@@ -268,6 +301,7 @@ function createDiscordCharacterCreationSession({
     getCurrentView,
     submitName,
     setAttribute,
+    setSkill,
     previous,
     next,
     finalise,

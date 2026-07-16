@@ -66,6 +66,17 @@ function createSessionHarness() {
         }
       }
     );
+  const skillView =
+    createView(
+      "skills",
+      {
+        stageNumber: 3,
+        canMovePrevious: true,
+        values: {
+          computers: 3
+        }
+      }
+    );
 
   const calls = [];
 
@@ -93,6 +104,26 @@ function createSessionHarness() {
       return currentView;
     },
 
+    setSkill(input) {
+      calls.push({
+        method: "setSkill",
+        input
+      });
+
+      currentView =
+        createView(
+          "skills",
+          {
+            stageNumber: 3,
+            canMovePrevious: true,
+            values: {
+              computers: input.value
+            }
+          }
+        );
+
+      return currentView;
+    },
     setAttribute(input) {
       calls.push({
         method: "setAttribute",
@@ -113,6 +144,9 @@ function createSessionHarness() {
         );
 
       return currentView;
+    },
+    moveToSkills() {
+      currentView = skillView;
     },
     submitName(name) {
       calls.push({
