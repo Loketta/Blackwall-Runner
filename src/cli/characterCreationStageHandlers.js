@@ -29,8 +29,7 @@ function parseKeyValueInput(
   if (!match) {
     return null;
   }
-
-  return Object.freeze({
+return Object.freeze({
     [keyFieldName]: match[1].toLowerCase(),
     value: Number(match[2])
   });
@@ -72,8 +71,7 @@ function parseProfessionInput(
     if (!profession) {
       return null;
     }
-
-    return Object.freeze({
+return Object.freeze({
       professionId: profession.id
     });
   }
@@ -92,8 +90,7 @@ function parseProfessionInput(
   if (!profession) {
     return null;
   }
-
-  return Object.freeze({
+return Object.freeze({
     professionId: profession.id
   });
 }
@@ -137,8 +134,7 @@ function parseProfessionChoiceInput(
   if (!selectedOption) {
     return null;
   }
-
-  return Object.freeze({
+return Object.freeze({
     choiceId: choice.id,
     value: selectedOption.id
   });
@@ -159,7 +155,7 @@ function createCharacterCreationStageHandlers({
   }
 
   function continueResult() {
-    return Object.freeze({
+return Object.freeze({
       status: "continue"
     });
   }
@@ -171,8 +167,7 @@ function createCharacterCreationStageHandlers({
     showMessage(
       "Character creation closed. Your draft can be resumed later."
     );
-
-    return Object.freeze({
+return Object.freeze({
       status: "cancelled",
       result
     });
@@ -467,7 +462,65 @@ function createCharacterCreationStageHandlers({
     return continueResult();
   }
 
-  return Object.freeze({
+  async function handleReview(view) {
+    showView(view);
+
+    const input = normaliseInput(
+      await readInput("> ")
+    );
+
+    const command = input.toLowerCase();
+
+    if (command === "quit") {
+      return cancelSession();
+    }
+
+    if (command === "back") {
+      tryPrevious(view);
+
+      return continueResult();
+    }
+
+    if (command === "finalise") {
+      if (
+        view.review?.readyToFinalise !== true
+      ) {
+        showMessage(
+          "This character cannot be finalised while validation errors remain."
+        );
+
+        return continueResult();
+      }
+
+      try {
+        controller.finalise();
+      } catch (error) {
+        showMessage(
+          `Unable to create this character: ${error.message}`
+        );
+      }
+
+      return continueResult();
+    }
+
+    showMessage(
+      "Type FINALISE to create this character, BACK to revise it, or QUIT to leave."
+    );
+
+    return continueResult();
+  }
+  async function handleFinished(view) {
+    showView(view);
+
+    return Object.freeze({
+      status: "completed",
+      character: view.character ?? null,
+      createdCharacter:
+        view.createdCharacter === true
+    });
+  }
+
+return Object.freeze({
     [CHARACTER_CREATION_STAGE.NAME]:
       handleName,
     [CHARACTER_CREATION_STAGE.ATTRIBUTES]:
@@ -477,7 +530,11 @@ function createCharacterCreationStageHandlers({
     [CHARACTER_CREATION_STAGE.PROFESSION]:
       handleProfession,
     [CHARACTER_CREATION_STAGE.PROFESSION_CHOICES]:
-      handleProfessionChoices
+      handleProfessionChoices,
+    [CHARACTER_CREATION_STAGE.REVIEW]:
+      handleReview,
+    [CHARACTER_CREATION_STAGE.FINISHED]:
+      handleFinished
   });
 }
 

@@ -117,7 +117,10 @@ function createCharacterCreationRenderer({
 
       const result = await handler(view);
 
-      if (result.status === "cancelled") {
+      if (
+        result.status === "cancelled" ||
+        result.status === "completed"
+      ) {
         return result;
       }
 
