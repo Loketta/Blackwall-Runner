@@ -164,6 +164,818 @@ function createNamePayload(view) {
   });
 }
 
+function formatAttributeName(attributeId) {
+  return attributeId
+    .split("_")
+    .map((part) =>
+      part.length > 0
+        ? part[0].toUpperCase() +
+          part.slice(1)
+        : part
+    )
+    .join(" ");
+}
+
+function createAttributesPayload(view) {
+  const values =
+    view.values &&
+    typeof view.values === "object"
+      ? view.values
+      : {};
+
+  const rules =
+    view.rules &&
+    typeof view.rules === "object"
+      ? view.rules
+      : {};
+
+  const attributeLines =
+    Object.entries(values)
+      .map(([attributeId, value]) =>
+        `**${formatAttributeName(attributeId)}:** ${value}`
+      );
+
+  const allocationLines = [
+    `**Allocated:** ${view.allocatedPoints ?? "?"} / ${rules.totalBudget ?? "?"}`,
+    `**Remaining:** ${view.remainingPoints ?? "?"}`,
+    `**Minimum:** ${rules.minimum ?? "?"}`,
+    `**Maximum:** ${rules.maximum ?? "?"}`
+  ];
+
+  const embed = createBaseEmbed(view)
+    .addFields(
+      {
+        name: "Allocation",
+        value: allocationLines.join("\n"),
+        inline: false
+      },
+      {
+        name: "Current Attributes",
+        value:
+          attributeLines.length > 0
+            ? attributeLines.join("\n")
+            : "No attribute values available.",
+        inline: false
+      }
+    );
+
+  return Object.freeze({
+    embeds: [
+      embed.toJSON()
+    ],
+    components: []
+  });
+}
+function getSkillDisplayName(
+  skillId,
+  options
+) {
+  const matchingOption =
+    Array.isArray(options)
+      ? options.find(
+          (option) =>
+            option &&
+            option.id === skillId
+        )
+      : null;
+
+  if (
+    matchingOption &&
+    typeof matchingOption.name === "string" &&
+    matchingOption.name.trim() !== ""
+  ) {
+    return matchingOption.name.trim();
+  }
+
+  return formatAttributeName(skillId);
+}
+
+function chunkLines(
+  lines,
+  maximumLines
+) {
+  const chunks = [];
+
+  for (
+    let index = 0;
+    index < lines.length;
+    index += maximumLines
+  ) {
+    chunks.push(
+      lines.slice(
+        index,
+        index + maximumLines
+      )
+    );
+  }
+
+  return chunks;
+}
+
+function createSkillsPayload(view) {
+  const values =
+    view.values &&
+    typeof view.values === "object"
+      ? view.values
+      : {};
+
+  const rules =
+    view.rules &&
+    typeof view.rules === "object"
+      ? view.rules
+      : {};
+
+  const options =
+    Array.isArray(view.options)
+      ? view.options
+      : [];
+
+  const allocationLines = [
+    `**Allocated:** ${view.allocatedPoints ?? "?"} / ${rules.totalBudget ?? "?"}`,
+    `**Remaining:** ${view.remainingPoints ?? "?"}`,
+    `**Minimum:** ${rules.minimum ?? "?"}`,
+    `**Maximum:** ${rules.maximum ?? "?"}`
+  ];
+
+  if (
+    typeof rules.untrainedAllowed === "boolean"
+  ) {
+    allocationLines.push(
+      `**Untrained Allowed:** ${
+        rules.untrainedAllowed
+          ? "Yes"
+          : "No"
+      }`
+    );
+  }
+
+  if (
+    typeof rules.untrainedRollMode === "string" &&
+    rules.untrainedRollMode.trim() !== ""
+  ) {
+    allocationLines.push(
+      `**Untrained Roll:** ${
+        formatAttributeName(
+          rules.untrainedRollMode
+        )
+      }`
+    );
+  }
+
+  const skillLines =
+    Object.entries(values)
+      .map(([skillId, value]) =>
+        `**${getSkillDisplayName(
+          skillId,
+          options
+        )}:** ${value}`
+      );
+
+  const embed = createBaseEmbed(view)
+    .addFields({
+      name: "Allocation",
+      value: allocationLines.join("\n"),
+      inline: false
+    });
+
+  if (skillLines.length === 0) {
+    embed.addFields({
+      name: "Current Skills",
+      value: "No skill values available.",
+      inline: false
+    });
+  } else {
+    const skillChunks =
+      chunkLines(skillLines, 11);
+
+    skillChunks.forEach(
+      (chunk, index) => {
+        embed.addFields({
+          name:
+            index === 0
+              ? "Current Skills"
+              : `Current Skills ${
+                  index + 1
+                }`,
+          value: chunk.join("\n"),
+          inline: true
+        });
+      }
+    );
+  }
+
+  return Object.freeze({
+    embeds: [
+      embed.toJSON()
+    ],
+    components: []
+  });
+}
+function formatDisplayValue(value) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "Not specified";
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+
+    return trimmed !== ""
+      ? trimmed
+      : "Not specified";
+  }
+
+  if (
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return "None";
+    }
+
+    return value
+      .map((entry) =>
+        formatDisplayValue(entry)
+      )
+      .join(", ");
+  }
+
+  if (typeof value === "object") {
+    const preferredParts = [];
+
+    if (
+      typeof value.name === "string" &&
+      value.name.trim() !== ""
+    ) {
+      preferredParts.push(
+        value.name.trim()
+      );
+    }
+
+    if (
+      typeof value.description === "string" &&
+      value.description.trim() !== ""
+    ) {
+      preferredParts.push(
+        value.description.trim()
+      );
+    }
+
+    if (
+      typeof value.effect === "string" &&
+      value.effect.trim() !== ""
+    ) {
+      preferredParts.push(
+        value.effect.trim()
+      );
+    }
+
+    if (preferredParts.length > 0) {
+      return preferredParts.join(" — ");
+    }
+
+    return Object.entries(value)
+      .map(([key, entry]) =>
+        `${formatAttributeName(key)}: ${
+          formatDisplayValue(entry)
+        }`
+      )
+      .join("; ");
+  }
+
+  return String(value);
+}
+
+function truncateDiscordFieldValue(value) {
+  const text =
+    typeof value === "string"
+      ? value
+      : String(value);
+
+  if (text.length <= 1024) {
+    return text;
+  }
+
+  return `${text.slice(0, 1021)}...`;
+}
+
+function getSelectedProfessionName(
+  professionId,
+  options
+) {
+  if (
+    typeof professionId !== "string" ||
+    professionId.trim() === ""
+  ) {
+    return "Not selected";
+  }
+
+  const matchingOption =
+    Array.isArray(options)
+      ? options.find(
+          (option) =>
+            option &&
+            option.id === professionId
+        )
+      : null;
+
+  if (
+    matchingOption &&
+    typeof matchingOption.name === "string" &&
+    matchingOption.name.trim() !== ""
+  ) {
+    return matchingOption.name.trim();
+  }
+
+  return formatAttributeName(
+    professionId
+  );
+}
+
+function createProfessionOptionText(option) {
+  const lines = [];
+
+  if (
+    option &&
+    option.aptitudes !== undefined
+  ) {
+    lines.push(
+      `**Aptitudes:** ${
+        formatDisplayValue(
+          option.aptitudes
+        )
+      }`
+    );
+  }
+
+  if (
+    option &&
+    option.mastery !== undefined
+  ) {
+    lines.push(
+      `**Mastery:** ${
+        formatDisplayValue(
+          option.mastery
+        )
+      }`
+    );
+  }
+
+  if (
+    option &&
+    typeof option.status === "string" &&
+    option.status.trim() !== ""
+  ) {
+    lines.push(
+      `**Status:** ${option.status.trim()}`
+    );
+  }
+
+  if (lines.length === 0) {
+    lines.push(
+      "No profession details available."
+    );
+  }
+
+  return truncateDiscordFieldValue(
+    lines.join("\n")
+  );
+}
+
+function createProfessionPayload(view) {
+  const options =
+    Array.isArray(view.options)
+      ? view.options
+      : [];
+
+  const professionId =
+    typeof view.values?.professionId ===
+    "string"
+      ? view.values.professionId
+      : null;
+
+  const embed = createBaseEmbed(view)
+    .addFields({
+      name: "Current Profession",
+      value:
+        getSelectedProfessionName(
+          professionId,
+          options
+        ),
+      inline: false
+    });
+
+  if (options.length === 0) {
+    embed.addFields({
+      name: "Available Professions",
+      value:
+        "No profession options available.",
+      inline: false
+    });
+  } else {
+    options.forEach((option, index) => {
+      const optionName =
+        option &&
+        typeof option.name === "string" &&
+        option.name.trim() !== ""
+          ? option.name.trim()
+          : option &&
+              typeof option.id === "string"
+            ? formatAttributeName(
+                option.id
+              )
+            : `Profession ${index + 1}`;
+
+      const selected =
+        option &&
+        option.id === professionId;
+
+      embed.addFields({
+        name:
+          selected
+            ? `${optionName} — Selected`
+            : optionName,
+        value:
+          createProfessionOptionText(
+            option
+          ),
+        inline: false
+      });
+    });
+  }
+
+  return Object.freeze({
+    embeds: [
+      embed.toJSON()
+    ],
+    components: []
+  });
+}
+function createProfessionChoicesPayload(view) {
+  const choices =
+    Array.isArray(view.choices)
+      ? view.choices
+      : [];
+
+  const embed =
+    createBaseEmbed(view);
+
+  if (choices.length === 0) {
+    embed.addFields({
+      name: "Profession Choices",
+      value:
+        "This profession has no additional choices.",
+      inline: false
+    });
+  } else {
+    choices.forEach((choice, index) => {
+      const optionLines =
+        Array.isArray(choice.options)
+          ? choice.options.map(
+              (option) => {
+                const selected =
+                  option.id === choice.value
+                    ? " ← Selected"
+                    : "";
+
+                return `• ${option.name}${selected}`;
+              }
+            )
+          : [];
+
+      embed.addFields({
+        name:
+          `Choice ${index + 1}: ${formatAttributeName(choice.id)}`,
+        value: [
+          `**Required:** ${
+            choice.required
+              ? "Yes"
+              : "No"
+          }`,
+          `**Type:** ${formatAttributeName(choice.type)}`,
+          `**Selection:** ${
+            choice.value ?? "Not selected"
+          }`,
+          `**Minimum:** ${choice.minimumSelections}`,
+          `**Maximum:** ${choice.maximumSelections}`,
+          "",
+          optionLines.length
+            ? optionLines.join("`n")
+            : "No options available."
+        ].join("`n"),
+        inline: false
+      });
+    });
+  }
+
+  return Object.freeze({
+    embeds: [
+      embed.toJSON()
+    ],
+    components: []
+  });
+}
+function formatKeyValueLines(values) {
+  if (
+    !values ||
+    typeof values !== "object"
+  ) {
+    return [];
+  }
+
+  return Object.entries(values)
+    .map(([key, value]) =>
+      `**${formatAttributeName(key)}:** ${formatDisplayValue(value)}`
+    );
+}
+
+function createReviewPayload(view) {
+  const review =
+    view.review &&
+    typeof view.review === "object"
+      ? view.review
+      : {};
+
+  const embed = createBaseEmbed(view);
+
+  const identityName =
+    typeof review.identity?.name === "string" &&
+    review.identity.name.trim() !== ""
+      ? review.identity.name.trim()
+      : "Not entered";
+
+  embed.addFields({
+    name: "Identity",
+    value: `**Name:** ${identityName}`,
+    inline: false
+  });
+
+  const attributeLines =
+    formatKeyValueLines(
+      review.attributes
+    );
+
+  embed.addFields({
+    name: "Attributes",
+    value:
+      attributeLines.length > 0
+        ? truncateDiscordFieldValue(
+            attributeLines.join("\n")
+          )
+        : "No attributes available.",
+    inline: false
+  });
+
+  const skillLines =
+    formatKeyValueLines(
+      review.skills
+    );
+
+  const skillChunks =
+    skillLines.length > 0
+      ? chunkLines(skillLines, 11)
+      : [];
+
+  if (skillChunks.length === 0) {
+    embed.addFields({
+      name: "Skills",
+      value: "No skills available.",
+      inline: false
+    });
+  } else {
+    skillChunks.forEach(
+      (chunk, index) => {
+        embed.addFields({
+          name:
+            index === 0
+              ? "Skills"
+              : `Skills ${index + 1}`,
+          value:
+            truncateDiscordFieldValue(
+              chunk.join("\n")
+            ),
+          inline: true
+        });
+      }
+    );
+  }
+
+  const professionName =
+    typeof review.profession?.name === "string" &&
+    review.profession.name.trim() !== ""
+      ? review.profession.name.trim()
+      : "Not selected";
+
+  const professionLines = [
+    `**Profession:** ${professionName}`
+  ];
+
+  if (
+    review.profession?.mastery !==
+    undefined
+  ) {
+    professionLines.push(
+      `**Mastery:** ${
+        formatDisplayValue(
+          review.profession.mastery
+        )
+      }`
+    );
+  }
+
+  embed.addFields({
+    name: "Profession",
+    value:
+      truncateDiscordFieldValue(
+        professionLines.join("\n")
+      ),
+    inline: false
+  });
+
+  const choiceLines =
+    review.professionChoices &&
+    typeof review.professionChoices === "object"
+      ? Object.entries(
+          review.professionChoices
+        ).map(([key, value]) => {
+          const displayValue =
+            typeof value === "string" &&
+            /^[a-z0-9]+(?:_[a-z0-9]+)+$/.test(
+              value
+            )
+              ? formatAttributeName(value)
+              : formatDisplayValue(value);
+
+          return `**${formatAttributeName(key)}:** ${displayValue}`;
+        })
+      : [];
+
+  if (choiceLines.length > 0) {
+    embed.addFields({
+      name: "Profession Choices",
+      value:
+        truncateDiscordFieldValue(
+          choiceLines.join("\n")
+        ),
+      inline: false
+    });
+  }
+
+  const validation =
+    review.validation &&
+    typeof review.validation === "object"
+      ? review.validation
+      : {};
+
+  const validationLines = [
+    `**Ready to Finalise:** ${
+      review.readyToFinalise === true
+        ? "Yes"
+        : "No"
+    }`
+  ];
+
+  if (
+    Array.isArray(validation.errors) &&
+    validation.errors.length > 0
+  ) {
+    validationLines.push(
+      "",
+      ...validation.errors.map(
+        (error) =>
+          `• ${formatDisplayValue(error)}`
+      )
+    );
+  } else {
+    validationLines.push(
+      "",
+      "No validation errors."
+    );
+  }
+
+  embed.addFields({
+    name: "Validation",
+    value:
+      truncateDiscordFieldValue(
+        validationLines.join("\n")
+      ),
+    inline: false
+  });
+
+  if (
+    typeof review.contextualSkillNote ===
+      "string" &&
+    review.contextualSkillNote.trim() !== ""
+  ) {
+    embed.addFields({
+      name: "Note",
+      value:
+        truncateDiscordFieldValue(
+          review.contextualSkillNote.trim()
+        ),
+      inline: false
+    });
+  }
+
+  return Object.freeze({
+    embeds: [
+      embed.toJSON()
+    ],
+    components: []
+  });
+}
+function createFinishedPayload(view) {
+  const character =
+    view.character &&
+    typeof view.character === "object"
+      ? view.character
+      : null;
+
+  const embed = createBaseEmbed(view);
+
+  if (!character) {
+    embed.addFields({
+      name: "Character",
+      value:
+        "Character creation completed, but no character record was returned.",
+      inline: false
+    });
+  } else {
+    const characterName =
+      typeof character.name === "string" &&
+      character.name.trim() !== ""
+        ? character.name.trim()
+        : typeof character.identity?.name === "string" &&
+          character.identity.name.trim() !== ""
+          ? character.identity.name.trim()
+          : "Unnamed Character";
+
+    const summaryLines = [
+      `**Name:** ${characterName}`
+    ];
+
+    if (
+      typeof character.id === "string" &&
+      character.id.trim() !== ""
+    ) {
+      summaryLines.push(
+        `**Character ID:** ${character.id.trim()}`
+      );
+    }
+
+    if (
+      typeof character.worldId === "string" &&
+      character.worldId.trim() !== ""
+    ) {
+      summaryLines.push(
+        `**World:** ${character.worldId.trim()}`
+      );
+    }
+
+    if (
+      typeof character.profession?.name === "string" &&
+      character.profession.name.trim() !== ""
+    ) {
+      summaryLines.push(
+        `**Profession:** ${character.profession.name.trim()}`
+      );
+    } else if (
+      typeof character.professionId === "string" &&
+      character.professionId.trim() !== ""
+    ) {
+      summaryLines.push(
+        `**Profession:** ${formatAttributeName(
+          character.professionId
+        )}`
+      );
+    }
+
+    embed.addFields({
+      name:
+        view.createdCharacter === false
+          ? "Existing Character"
+          : "Character Created",
+      value:
+        truncateDiscordFieldValue(
+          summaryLines.join("\n")
+        ),
+      inline: false
+    });
+  }
+
+  return Object.freeze({
+    embeds: [
+      embed.toJSON()
+    ],
+    components: []
+  });
+}
 function createDiscordCharacterCreationPayload(
   suppliedView
 ) {
@@ -175,6 +987,50 @@ function createDiscordCharacterCreationPayload(
   ) {
     return createNamePayload(view);
   }
+ 
+  if (
+    view.stage ===
+    CHARACTER_CREATION_STAGE.ATTRIBUTES
+  ) {
+    return createAttributesPayload(view);
+  }
+
+  if (
+    view.stage ===
+    CHARACTER_CREATION_STAGE.SKILLS
+  ) {
+    return createSkillsPayload(view);
+  }
+
+  if (
+    view.stage ===
+    CHARACTER_CREATION_STAGE.PROFESSION
+  ) {
+    return createProfessionPayload(view);
+  }
+  if (
+    view.stage ===
+    CHARACTER_CREATION_STAGE.PROFESSION_CHOICES
+  ) {
+    return createProfessionChoicesPayload(
+      view
+    );
+  }
+
+  if (
+    view.stage ===
+    CHARACTER_CREATION_STAGE.REVIEW
+  ) {
+    return createReviewPayload(view);
+  }
+
+  if (
+    view.stage ===
+    CHARACTER_CREATION_STAGE.FINISHED
+  ) {
+    return createFinishedPayload(view);
+  }
+
 
   throw new Error(
     `Discord rendering is not implemented for stage: ${view.stage}`
