@@ -3,11 +3,13 @@
 const assert = require("assert");
 
 const {
+  ATTRIBUTE_ACTION_PREFIX,
   CHARACTER_CREATION_ACTION,
   CHARACTER_NAME_INPUT_ID,
   CREATE_CHARACTER_COMMAND,
   createDiscordCharacterCreationRouter,
-  createInteractionIdentity
+  createInteractionIdentity,
+  parseAttributeAction
 } = require(
   "../../src/discord/characterCreation/discordCharacterCreationRouter"
 );
@@ -58,7 +60,10 @@ function createSessionHarness() {
       "attributes",
       {
         stageNumber: 2,
-        canMovePrevious: true
+        canMovePrevious: true,
+        values: {
+          force: 4
+        }
       }
     );
 
@@ -88,6 +93,27 @@ function createSessionHarness() {
       return currentView;
     },
 
+    setAttribute(input) {
+      calls.push({
+        method: "setAttribute",
+        input
+      });
+
+      currentView =
+        createView(
+          "attributes",
+          {
+            stageNumber: 2,
+            canMovePrevious: true,
+            values: {
+              force:
+                input.value
+            }
+          }
+        );
+
+      return currentView;
+    },
     submitName(name) {
       calls.push({
         method: "submitName",
@@ -99,6 +125,25 @@ function createSessionHarness() {
       return currentView;
     },
 
+    previous() {
+      calls.push({
+        method: "previous"
+      });
+
+      currentView = nameView;
+
+      return currentView;
+    },
+
+    next() {
+      calls.push({
+        method: "next"
+      });
+
+      currentView = attributeView;
+
+      return currentView;
+    },
     cancel() {
       calls.push({
         method: "cancel"
@@ -377,12 +422,14 @@ test(
   "Starts character creation from the slash command",
   async () => {
     const {
+
       router,
       registryHarness,
       renderCalls
     } = createRouterHarness();
 
     const {
+
       interaction,
       calls
     } = createInteraction({
@@ -458,6 +505,7 @@ test(
   "Resumes an existing character creation session",
   async () => {
     const {
+
       router,
       registryHarness
     } = createRouterHarness();
@@ -470,6 +518,7 @@ test(
     );
 
     const {
+
       interaction
     } = createInteraction({
       commandName:
@@ -523,6 +572,7 @@ test(
   "Opens the name modal",
   async () => {
     const {
+
       router,
       registryHarness,
       modalCalls
@@ -533,6 +583,7 @@ test(
     );
 
     const {
+
       interaction,
       calls
     } = createInteraction({
@@ -592,6 +643,7 @@ test(
   "Submits a name and updates the interaction",
   async () => {
     const {
+
       router,
       registryHarness,
       renderCalls
@@ -602,6 +654,7 @@ test(
     );
 
     const {
+
       interaction,
       calls
     } = createInteraction({
@@ -689,7 +742,177 @@ test(
 );
 
 test(
-  "Cancels character creation and removes the session",
+  "Moves to the previous character creation stage",
+  async () => {
+    const {
+
+      router,
+      registryHarness
+    } = createRouterHarness();
+
+    registryHarness.registry.seed(
+      createIdentity()
+    );
+
+    const {
+
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        CHARACTER_CREATION_ACTION.PREVIOUS,
+
+      isButton() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.action,
+      "previous"
+    );
+
+    assert.strictEqual(
+      result.view.stage,
+      "name"
+    );
+
+    assert.strictEqual(
+      registryHarness
+        .sessionHarness
+        .calls.some(
+          (call) =>
+            call.method === "previous"
+        ),
+      true
+    );
+
+    assert.strictEqual(
+      calls.some(
+        (call) =>
+          call.method === "update"
+      ),
+      true
+    );
+  }
+);
+
+test(
+  "Moves to the next character creation stage",
+  async () => {
+    const {
+
+      router,
+      registryHarness
+    } = createRouterHarness();
+
+    registryHarness.registry.seed(
+      createIdentity()
+    );
+
+    const {
+
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        CHARACTER_CREATION_ACTION.NEXT,
+
+      isButton() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.action,
+      "next"
+    );
+
+    assert.strictEqual(
+      result.view.stage,
+      "attributes"
+    );
+
+    assert.strictEqual(
+      registryHarness
+        .sessionHarness
+        .calls.some(
+          (call) =>
+            call.method === "next"
+        ),
+      true
+    );
+
+    assert.strictEqual(
+      calls.some(
+        (call) =>
+          call.method === "update"
+      ),
+      true
+    );
+  }
+);
+test(
+  "Parses attribute interaction actions",
+  () => {
+    assert.deepStrictEqual(
+      parseAttributeAction(
+        `${ATTRIBUTE_ACTION_PREFIX}force:increase`
+      ),
+      {
+        attributeId: "force",
+        direction: "increase"
+      }
+    );
+
+    assert.deepStrictEqual(
+      parseAttributeAction(
+        `${ATTRIBUTE_ACTION_PREFIX}agility:decrease`
+      ),
+      {
+        attributeId: "agility",
+        direction: "decrease"
+      }
+    );
+
+    assert.strictEqual(
+      parseAttributeAction(
+        "character_creation:other"
+      ),
+      null
+    );
+
+    assert.strictEqual(
+      parseAttributeAction(
+        `${ATTRIBUTE_ACTION_PREFIX}force:invalid`
+      ),
+      null
+    );
+  }
+);
+
+test(
+  "Increases an attribute from a Discord button",
   async () => {
     const {
       router,
@@ -703,7 +926,143 @@ test(
       identity
     );
 
+    registryHarness
+      .sessionHarness
+      .session
+      .submitName("Naoko");
+
     const {
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        `${ATTRIBUTE_ACTION_PREFIX}force:increase`,
+
+      isButton() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.action,
+      "increase_attribute"
+    );
+
+    assert.strictEqual(
+      result.attributeId,
+      "force"
+    );
+
+    assert.strictEqual(
+      result.value,
+      5
+    );
+
+    const setCall =
+      registryHarness
+        .sessionHarness
+        .calls.find(
+          (call) =>
+            call.method ===
+            "setAttribute"
+        );
+
+    assert.deepStrictEqual(
+      setCall,
+      {
+        method: "setAttribute",
+        input: {
+          attributeId: "force",
+          value: 5
+        }
+      }
+    );
+
+    assert.strictEqual(
+      calls.some(
+        (call) =>
+          call.method === "update"
+      ),
+      true
+    );
+  }
+);
+
+test(
+  "Decreases an attribute from a Discord button",
+  async () => {
+    const {
+      router,
+      registryHarness
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    registryHarness
+      .sessionHarness
+      .session
+      .submitName("Naoko");
+
+    const {
+      interaction
+    } = createInteraction({
+      customId:
+        `${ATTRIBUTE_ACTION_PREFIX}force:decrease`,
+
+      isButton() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.action,
+      "decrease_attribute"
+    );
+
+    assert.strictEqual(
+      result.value,
+      3
+    );
+  }
+);
+test(
+  "Cancels character creation and removes the session",
+  async () => {
+    const {
+
+      router,
+      registryHarness
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    const {
+
       interaction,
       calls
     } = createInteraction({
@@ -782,10 +1141,12 @@ test(
   "Returns unhandled for unrelated interactions",
   async () => {
     const {
+
       router
     } = createRouterHarness();
 
     const {
+
       interaction,
       calls
     } = createInteraction({
@@ -820,10 +1181,12 @@ test(
   "Rejects component interactions without an active session",
   async () => {
     const {
+
       router
     } = createRouterHarness();
 
     const {
+
       interaction
     } = createInteraction({
       customId:

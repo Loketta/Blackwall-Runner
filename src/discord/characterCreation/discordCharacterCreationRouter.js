@@ -8,10 +8,16 @@ const CHARACTER_CREATION_ACTION = Object.freeze({
     "character_creation:set_name",
   SUBMIT_NAME:
     "character_creation:submit_name",
+  PREVIOUS:
+    "character_creation:previous",
+  NEXT:
+    "character_creation:next",
   CANCEL:
     "character_creation:cancel"
 });
 
+const ATTRIBUTE_ACTION_PREFIX =
+  "character_creation:attribute:";
 const CHARACTER_NAME_INPUT_ID =
   "character_name";
 
@@ -60,6 +66,51 @@ function requireNonEmptyString(
   return value.trim();
 }
 
+function parseAttributeAction(
+  customId
+) {
+  if (
+    typeof customId !== "string" ||
+    !customId.startsWith(
+      ATTRIBUTE_ACTION_PREFIX
+    )
+  ) {
+    return null;
+  }
+
+  const remainder =
+    customId.slice(
+      ATTRIBUTE_ACTION_PREFIX.length
+    );
+
+  const parts =
+    remainder.split(":");
+
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const [
+    attributeId,
+    direction
+  ] = parts;
+
+  if (
+    attributeId.trim() === "" ||
+    (
+      direction !== "increase" &&
+      direction !== "decrease"
+    )
+  ) {
+    return null;
+  }
+
+  return Object.freeze({
+    attributeId:
+      attributeId.trim(),
+    direction
+  });
+}
 function createInteractionIdentity(
   interaction
 ) {
@@ -290,6 +341,147 @@ function createDiscordCharacterCreationRouter({
     });
   }
 
+  async function handleAttributeAction(
+    interaction,
+    action
+  ) {
+    const identity =
+      createInteractionIdentity(
+        interaction
+      );
+
+    const session =
+      requireSession(
+        sessionRegistry,
+        identity
+      );
+
+    requireFunction(
+      session.getCurrentView,
+      "session.getCurrentView"
+    );
+
+    requireFunction(
+      session.setAttribute,
+      "session.setAttribute"
+    );
+
+    const currentView =
+      session.getCurrentView();
+
+    if (
+      currentView.stage !==
+        "attributes"
+    ) {
+      throw new Error(
+        "Attribute controls are only available during the attributes stage"
+      );
+    }
+
+    const currentValue =
+      currentView.values?.[
+        action.attributeId
+      ];
+
+    if (!Number.isInteger(currentValue)) {
+      throw new Error(
+        `Attribute ${action.attributeId} is not available in the current view`
+      );
+    }
+
+    const nextValue =
+      action.direction === "increase"
+        ? currentValue + 1
+        : currentValue - 1;
+
+    const view =
+      session.setAttribute({
+        attributeId:
+          action.attributeId,
+        value: nextValue
+      });
+
+    await interaction.update(
+      renderView(view)
+    );
+
+    return Object.freeze({
+      handled: true,
+      action:
+        action.direction === "increase"
+          ? "increase_attribute"
+          : "decrease_attribute",
+      attributeId:
+        action.attributeId,
+      value: nextValue,
+      view
+    });
+  }
+  async function handlePrevious(
+    interaction
+  ) {
+    const identity =
+      createInteractionIdentity(
+        interaction
+      );
+
+    const session =
+      requireSession(
+        sessionRegistry,
+        identity
+      );
+
+    requireFunction(
+      session.previous,
+      "session.previous"
+    );
+
+    const view =
+      session.previous();
+
+    await interaction.update(
+      renderView(view)
+    );
+
+    return Object.freeze({
+      handled: true,
+      action: "previous",
+      view
+    });
+  }
+
+  async function handleNext(
+    interaction
+  ) {
+    const identity =
+      createInteractionIdentity(
+        interaction
+      );
+
+    const session =
+      requireSession(
+        sessionRegistry,
+        identity
+      );
+
+    requireFunction(
+      session.next,
+      "session.next"
+    );
+
+    const view =
+      session.next();
+
+    await interaction.update(
+      renderView(view)
+    );
+
+    return Object.freeze({
+      handled: true,
+      action: "next",
+      view
+    });
+  }
   async function handleCancel(
     interaction
   ) {
@@ -380,8 +572,51 @@ function createDiscordCharacterCreationRouter({
           interaction
         );
       }
+      const attributeAction =
+        parseAttributeAction(
+          interaction.customId
+        );
+
+      if (attributeAction) {
+        requireFunction(
+          interaction.update,
+          "interaction.update"
+        );
+
+        return handleAttributeAction(
+          interaction,
+          attributeAction
+        );
+      }
+
+            if (
+        interaction.customId ===
+        CHARACTER_CREATION_ACTION.PREVIOUS
+      ) {
+        requireFunction(
+          interaction.update,
+          "interaction.update"
+        );
+
+        return handlePrevious(
+          interaction
+        );
+      }
 
       if (
+        interaction.customId ===
+        CHARACTER_CREATION_ACTION.NEXT
+      ) {
+        requireFunction(
+          interaction.update,
+          "interaction.update"
+        );
+
+        return handleNext(
+          interaction
+        );
+      }
+if (
         interaction.customId ===
         CHARACTER_CREATION_ACTION.CANCEL
       ) {
@@ -422,9 +657,11 @@ function createDiscordCharacterCreationRouter({
 }
 
 module.exports = {
+  ATTRIBUTE_ACTION_PREFIX,
   CHARACTER_CREATION_ACTION,
   CHARACTER_NAME_INPUT_ID,
   CREATE_CHARACTER_COMMAND,
   createDiscordCharacterCreationRouter,
-  createInteractionIdentity
+  createInteractionIdentity,
+  parseAttributeAction
 };

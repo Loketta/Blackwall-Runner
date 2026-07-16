@@ -26,6 +26,10 @@ const DISCORD_CHARACTER_CREATION_ACTION =
       "character_creation:set_name",
     SUBMIT_NAME:
       "character_creation:submit_name",
+    PREVIOUS:
+      "character_creation:previous",
+    NEXT:
+      "character_creation:next",
     CANCEL:
       "character_creation:cancel"
   });
@@ -176,6 +180,163 @@ function formatAttributeName(attributeId) {
     .join(" ");
 }
 
+function createAttributeAdjustmentButtons(
+  view
+) {
+  const values =
+    view.values &&
+    typeof view.values === "object"
+      ? view.values
+      : {};
+
+  const rules =
+    view.rules &&
+    typeof view.rules === "object"
+      ? view.rules
+      : {};
+
+  const minimum =
+    Number.isInteger(rules.minimum)
+      ? rules.minimum
+      : 2;
+
+  const maximum =
+    Number.isInteger(rules.maximum)
+      ? rules.maximum
+      : 8;
+
+  const remainingPoints =
+    Number.isInteger(view.remainingPoints)
+      ? view.remainingPoints
+      : 0;
+
+  return Object.entries(values)
+    .flatMap(
+      ([attributeId, value]) => {
+        const displayName =
+          formatAttributeName(
+            attributeId
+          );
+
+        const decreaseButton =
+          new ButtonBuilder()
+            .setCustomId(
+              `character_creation:attribute:${attributeId}:decrease`
+            )
+            .setLabel(`- ${displayName}`)
+            .setStyle(
+              ButtonStyle.Secondary
+            )
+            .setDisabled(
+              !Number.isInteger(value) ||
+              value <= minimum
+            );
+
+        const increaseButton =
+          new ButtonBuilder()
+            .setCustomId(
+              `character_creation:attribute:${attributeId}:increase`
+            )
+            .setLabel(`+ ${displayName}`)
+            .setStyle(
+              ButtonStyle.Primary
+            )
+            .setDisabled(
+              !Number.isInteger(value) ||
+              value >= maximum ||
+              remainingPoints <= 0
+            );
+
+        return [
+          decreaseButton,
+          increaseButton
+        ];
+      }
+    );
+}
+
+function createComponentRows(
+  components,
+  maximumPerRow = 5
+) {
+  const rows = [];
+
+  for (
+    let index = 0;
+    index < components.length;
+    index += maximumPerRow
+  ) {
+    rows.push(
+      new ActionRowBuilder()
+        .addComponents(
+          ...components.slice(
+            index,
+            index + maximumPerRow
+          )
+        )
+        .toJSON()
+    );
+  }
+
+  return rows;
+}
+
+function createAttributesComponents(view) {
+  const adjustmentButtons =
+    createAttributeAdjustmentButtons(
+      view
+    );
+
+  const adjustmentRows =
+    createComponentRows(
+      adjustmentButtons
+    );
+
+  const previousButton =
+    new ButtonBuilder()
+      .setCustomId(
+        DISCORD_CHARACTER_CREATION_ACTION.PREVIOUS
+      )
+      .setLabel("Previous")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(
+        view.canMovePrevious !== true
+      );
+
+  const nextButton =
+    new ButtonBuilder()
+      .setCustomId(
+        DISCORD_CHARACTER_CREATION_ACTION.NEXT
+      )
+      .setLabel("Next")
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(
+        view.canMoveNext !== true
+      );
+
+  const cancelButton =
+    new ButtonBuilder()
+      .setCustomId(
+        DISCORD_CHARACTER_CREATION_ACTION.CANCEL
+      )
+      .setLabel("Save and Exit")
+      .setStyle(ButtonStyle.Secondary);
+
+  const navigationRow =
+    new ActionRowBuilder()
+      .addComponents(
+        previousButton,
+        nextButton,
+        cancelButton
+      )
+      .toJSON();
+
+  return [
+    ...adjustmentRows,
+    navigationRow
+  ];
+}
+
 function createAttributesPayload(view) {
   const values =
     view.values &&
@@ -223,8 +384,8 @@ function createAttributesPayload(view) {
     embeds: [
       embed.toJSON()
     ],
-    components: []
-  });
+    components:
+      createAttributesComponents(view)  });
 }
 function getSkillDisplayName(
   skillId,

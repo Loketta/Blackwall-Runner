@@ -43,7 +43,22 @@ function createControllerHarness() {
       "attributes",
       {
         stageNumber: 2,
-        canMovePrevious: true
+        canMovePrevious: true,
+        values: {
+          force: 4
+        }
+      }
+    );
+
+  const updatedAttributeView =
+    createView(
+      "attributes",
+      {
+        stageNumber: 2,
+        canMovePrevious: true,
+        values: {
+          force: 5
+        }
       }
     );
 
@@ -101,6 +116,16 @@ function createControllerHarness() {
         method: "submit",
         input
       });
+
+      if (
+        currentView.stage ===
+          "attributes" &&
+        input.attributeId === "force" &&
+        input.value === 5
+      ) {
+        currentView =
+          updatedAttributeView;
+      }
 
       return currentView;
     },
@@ -166,6 +191,7 @@ function createControllerHarness() {
     views: {
       nameView,
       attributeView,
+      updatedAttributeView,
       reviewView,
       finishedView
     },
@@ -358,6 +384,111 @@ test(
   }
 );
 
+test(
+  "Updates an attribute through the controller",
+  () => {
+    const {
+      session,
+      controllerHarness
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    session.submitName("Naoko");
+
+    const view =
+      session.setAttribute({
+        attributeId: "force",
+        value: 5
+      });
+
+    assert.strictEqual(
+      view.stage,
+      "attributes"
+    );
+
+    assert.strictEqual(
+      view.values.force,
+      5
+    );
+
+    const submitCall =
+      controllerHarness.calls.find(
+        (call) =>
+          call.method === "submit" &&
+          call.input.attributeId ===
+            "force"
+      );
+
+    assert.deepStrictEqual(
+      submitCall,
+      {
+        method: "submit",
+        input: {
+          attributeId: "force",
+          value: 5
+        }
+      }
+    );
+  }
+);
+
+test(
+  "Rejects attribute updates outside the attributes stage",
+  () => {
+    const {
+      session
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    assert.throws(
+      () =>
+        session.setAttribute({
+          attributeId: "force",
+          value: 5
+        }),
+      /only be updated during the attributes stage/
+    );
+  }
+);
+
+test(
+  "Requires valid attribute update input",
+  () => {
+    const {
+      session
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    session.submitName("Naoko");
+
+    assert.throws(
+      () =>
+        session.setAttribute({
+          attributeId: "",
+          value: 5
+        }),
+      /attributeId must be a non-empty string/
+    );
+
+    assert.throws(
+      () =>
+        session.setAttribute({
+          attributeId: "force",
+          value: 5.5
+        }),
+      /value must be an integer/
+    );
+  }
+);
 test(
   "Finalises with configured starting state",
   () => {

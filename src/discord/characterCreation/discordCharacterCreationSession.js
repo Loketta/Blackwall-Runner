@@ -169,6 +169,39 @@ function createDiscordCharacterCreationSession({
     return currentView;
   }
 
+  function setAttribute({
+    attributeId,
+    value
+  }) {
+    requireStarted();
+
+    if (currentView.stage !== "attributes") {
+      throw new Error(
+        "Attributes can only be updated during the attributes stage."
+      );
+    }
+
+    const normalisedAttributeId =
+      requireNonEmptyString(
+        attributeId,
+        "attributeId"
+      );
+
+    if (!Number.isInteger(value)) {
+      throw new TypeError(
+        "value must be an integer."
+      );
+    }
+
+    currentView =
+      controller.submit({
+        attributeId:
+          normalisedAttributeId,
+        value
+      });
+
+    return currentView;
+  }
   function previous() {
     requireStarted();
 
@@ -234,6 +267,7 @@ function createDiscordCharacterCreationSession({
     start,
     getCurrentView,
     submitName,
+    setAttribute,
     previous,
     next,
     finalise,

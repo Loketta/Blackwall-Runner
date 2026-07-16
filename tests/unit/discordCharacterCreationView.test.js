@@ -640,13 +640,158 @@ test(
       /Face.*3/
     );
 
-    assert.deepStrictEqual(
-      payload.components,
-      []
+    assert.strictEqual(
+      payload.components.length,
+      4
+    );
+
+    const allButtons =
+      payload.components.flatMap(
+        (row) => row.components
+      );
+
+    const forceDecrease =
+      allButtons.find(
+        (button) =>
+          button.custom_id ===
+          "character_creation:attribute:force:decrease"
+      );
+
+    const forceIncrease =
+      allButtons.find(
+        (button) =>
+          button.custom_id ===
+          "character_creation:attribute:force:increase"
+      );
+
+    assert.ok(forceDecrease);
+    assert.ok(forceIncrease);
+
+    assert.strictEqual(
+      forceDecrease.label,
+      "- Force"
+    );
+
+    assert.strictEqual(
+      forceIncrease.label,
+      "+ Force"
+    );
+
+    assert.strictEqual(
+      forceDecrease.disabled,
+      false
+    );
+
+    assert.strictEqual(
+      forceIncrease.disabled,
+      false
+    );
+
+    const navigationRow =
+      payload.components[
+        payload.components.length - 1
+      ];
+
+    assert.strictEqual(
+      navigationRow.components.length,
+      3
+    );
+
+    assert.strictEqual(
+      navigationRow.components[0].custom_id,
+      DISCORD_CHARACTER_CREATION_ACTION.PREVIOUS
+    );
+
+    assert.strictEqual(
+      navigationRow.components[0].disabled,
+      false
+    );
+
+    assert.strictEqual(
+      navigationRow.components[1].custom_id,
+      DISCORD_CHARACTER_CREATION_ACTION.NEXT
+    );
+
+    assert.strictEqual(
+      navigationRow.components[1].disabled,
+      true
+    );
+
+    assert.strictEqual(
+      navigationRow.components[2].custom_id,
+      DISCORD_CHARACTER_CREATION_ACTION.CANCEL
     );
   }
 );
+test(
+  "Disables attribute controls at allocation limits",
+  () => {
+    const payload =
+      createDiscordCharacterCreationPayload(
+        createAttributesView({
+          values: {
+            force: 2,
+            agility: 8
+          },
+          allocatedPoints: 42,
+          remainingPoints: 0
+        })
+      );
 
+    const buttons =
+      payload.components.flatMap(
+        (row) => row.components
+      );
+
+    const forceDecrease =
+      buttons.find(
+        (button) =>
+          button.custom_id ===
+          "character_creation:attribute:force:decrease"
+      );
+
+    const forceIncrease =
+      buttons.find(
+        (button) =>
+          button.custom_id ===
+          "character_creation:attribute:force:increase"
+      );
+
+    const agilityDecrease =
+      buttons.find(
+        (button) =>
+          button.custom_id ===
+          "character_creation:attribute:agility:decrease"
+      );
+
+    const agilityIncrease =
+      buttons.find(
+        (button) =>
+          button.custom_id ===
+          "character_creation:attribute:agility:increase"
+      );
+
+    assert.strictEqual(
+      forceDecrease.disabled,
+      true
+    );
+
+    assert.strictEqual(
+      forceIncrease.disabled,
+      true
+    );
+
+    assert.strictEqual(
+      agilityDecrease.disabled,
+      false
+    );
+
+    assert.strictEqual(
+      agilityIncrease.disabled,
+      true
+    );
+  }
+);
 test(
   "Handles an attributes view with no values",
   () => {
