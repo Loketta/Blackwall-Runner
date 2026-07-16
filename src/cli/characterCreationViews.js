@@ -41,6 +41,87 @@ function createHeader(view) {
   });
 }
 
+function createCommandLine(
+  command,
+  description
+) {
+  return `${command.padEnd(10, " ")}${description}`;
+}
+
+function createCommandFooter(view) {
+  if (
+    view.stage ===
+    CHARACTER_CREATION_STAGE.FINISHED
+  ) {
+    return [];
+  }
+
+  const commands = [];
+
+  if (
+    view.stage !==
+      CHARACTER_CREATION_STAGE.NAME &&
+    view.canMovePrevious === true
+  ) {
+    commands.push(
+      createCommandLine(
+        "BACK",
+        "Previous step"
+      )
+    );
+  }
+
+  if (
+    view.stage ===
+      CHARACTER_CREATION_STAGE.ATTRIBUTES ||
+    view.stage ===
+      CHARACTER_CREATION_STAGE.SKILLS ||
+    view.stage ===
+      CHARACTER_CREATION_STAGE.PROFESSION ||
+    view.stage ===
+      CHARACTER_CREATION_STAGE.PROFESSION_CHOICES
+  ) {
+    commands.push(
+      createCommandLine(
+        "NEXT",
+        view.canMoveNext === true
+          ? "Continue"
+          : "Continue when this step is complete"
+      )
+    );
+  }
+
+  if (
+    view.stage ===
+    CHARACTER_CREATION_STAGE.REVIEW
+  ) {
+    commands.push(
+      createCommandLine(
+        "FINALISE",
+        view.review?.readyToFinalise === true
+          ? "Create this character"
+          : "Available when validation is complete"
+      )
+    );
+  }
+
+  commands.push(
+    createCommandLine(
+      "QUIT",
+      "Save draft and exit"
+    )
+  );
+
+  return [
+    "",
+    "----------------------------------------",
+    "Commands",
+    "",
+    ...commands,
+    "----------------------------------------"
+  ];
+}
+
 function createNameScreen(view) {
   const currentName =
     typeof view.values?.name === "string" &&
@@ -54,7 +135,7 @@ function createNameScreen(view) {
     `Current name: ${currentName}`,
     "",
     "Enter your character's name.",
-    "Type QUIT to save your draft and leave."
+    ...createCommandFooter(view)
   ];
 }
 
@@ -90,23 +171,7 @@ function createAttributeScreen(view) {
     "Enter an attribute and value, for example:"
   );
   lines.push("force 6");
-
-  if (view.canMoveNext) {
-    lines.push("");
-    lines.push(
-      "All points are allocated. Type NEXT to continue."
-    );
-  }
-
-  if (view.canMovePrevious) {
-    lines.push(
-      "Type BACK to return to the previous step."
-    );
-  }
-
-  lines.push(
-    "Type QUIT to save your draft and leave."
-  );
+  lines.push(...createCommandFooter(view));
 
   return lines;
 }
@@ -169,26 +234,8 @@ function createSkillScreen(view) {
   lines.push(
     "Enter a skill identifier and value."
   );
-  lines.push(
-    "Example: athletics 4"
-  );
-
-  if (view.canMoveNext) {
-    lines.push("");
-    lines.push(
-      "All points are allocated. Type NEXT to continue."
-    );
-  }
-
-  if (view.canMovePrevious) {
-    lines.push(
-      "Type BACK to return to the previous step."
-    );
-  }
-
-  lines.push(
-    "Type QUIT to save your draft and leave."
-  );
+  lines.push("Example: athletics 4");
+  lines.push(...createCommandFooter(view));
 
   return lines;
 }
@@ -295,26 +342,8 @@ function createProfessionScreen(view) {
   lines.push(
     "Choose a profession by number or identifier."
   );
-  lines.push(
-    "Example: 2"
-  );
-
-  if (view.canMoveNext) {
-    lines.push("");
-    lines.push(
-      "A profession is selected. Type NEXT to continue."
-    );
-  }
-
-  if (view.canMovePrevious) {
-    lines.push(
-      "Type BACK to return to the previous step."
-    );
-  }
-
-  lines.push(
-    "Type QUIT to save your draft and leave."
-  );
+  lines.push("Example: 2");
+  lines.push(...createCommandFooter(view));
 
   return lines;
 }
@@ -383,23 +412,7 @@ function createProfessionChoiceScreen(view) {
     "Choose a weapon type by number or identifier."
   );
   lines.push("Example: 1");
-
-  if (view.canMoveNext) {
-    lines.push("");
-    lines.push(
-      "All required choices are complete. Type NEXT to continue."
-    );
-  }
-
-  if (view.canMovePrevious) {
-    lines.push(
-      "Type BACK to return to profession selection."
-    );
-  }
-
-  lines.push(
-    "Type QUIT to save your draft and leave."
-  );
+  lines.push(...createCommandFooter(view));
 
   return lines;
 }
@@ -588,27 +601,7 @@ function createReviewScreen(view) {
     }
   }
 
-  lines.push("");
-
-  if (review.readyToFinalise === true) {
-    lines.push(
-      "Type FINALISE to create this character."
-    );
-  } else {
-    lines.push(
-      "This character cannot be finalised yet."
-    );
-  }
-
-  if (view.canMovePrevious) {
-    lines.push(
-      "Type BACK to revise your character."
-    );
-  }
-
-  lines.push(
-    "Type QUIT to save your draft and leave."
-  );
+  lines.push(...createCommandFooter(view));
 
   return lines;
 }
@@ -638,6 +631,7 @@ function createFinishedScreen(view) {
     "Character creation is complete."
   ];
 }
+
 function createUnsupportedScreen(view) {
   return [
     ...createHeader(view),
@@ -708,6 +702,7 @@ function renderView(view) {
       "\n"
     );
   }
+
   if (
     view.stage ===
     CHARACTER_CREATION_STAGE.FINISHED
@@ -723,6 +718,7 @@ function renderView(view) {
 }
 
 module.exports = {
+  createCommandFooter,
   formatLabel,
   renderView
 };

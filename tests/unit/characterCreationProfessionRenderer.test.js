@@ -247,7 +247,12 @@ test(
 
     assert.match(
       output,
-      /Type NEXT to continue/
+      /NEXT\s+Continue/
+    );
+
+    assert.doesNotMatch(
+      output,
+      /Continue when this step is complete/
     );
   }
 );
