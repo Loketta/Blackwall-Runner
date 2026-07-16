@@ -10,6 +10,17 @@ const CHARACTER_CREATION_STAGE = Object.freeze({
   FINISHED: "finished"
 });
 
+const RESERVED_NAME_COMMANDS = Object.freeze(
+  new Set([
+    "next",
+    "back",
+    "quit",
+    "help",
+    "cancel",
+    "finalise"
+  ])
+);
+
 function normaliseInput(value) {
   if (typeof value !== "string") {
     return "";
@@ -29,7 +40,8 @@ function parseKeyValueInput(
   if (!match) {
     return null;
   }
-return Object.freeze({
+
+  return Object.freeze({
     [keyFieldName]: match[1].toLowerCase(),
     value: Number(match[2])
   });
@@ -71,7 +83,8 @@ function parseProfessionInput(
     if (!profession) {
       return null;
     }
-return Object.freeze({
+
+    return Object.freeze({
       professionId: profession.id
     });
   }
@@ -90,7 +103,8 @@ return Object.freeze({
   if (!profession) {
     return null;
   }
-return Object.freeze({
+
+  return Object.freeze({
     professionId: profession.id
   });
 }
@@ -134,7 +148,8 @@ function parseProfessionChoiceInput(
   if (!selectedOption) {
     return null;
   }
-return Object.freeze({
+
+  return Object.freeze({
     choiceId: choice.id,
     value: selectedOption.id
   });
@@ -155,7 +170,7 @@ function createCharacterCreationStageHandlers({
   }
 
   function continueResult() {
-return Object.freeze({
+    return Object.freeze({
       status: "continue"
     });
   }
@@ -167,7 +182,8 @@ return Object.freeze({
     showMessage(
       "Character creation closed. Your draft can be resumed later."
     );
-return Object.freeze({
+
+    return Object.freeze({
       status: "cancelled",
       result
     });
@@ -214,16 +230,28 @@ return Object.freeze({
     showView(view);
 
     const input = normaliseInput(
-      await readInput("> ")
+      await readInput("Name> ")
     );
 
-    if (input.toLowerCase() === "quit") {
+    const command = input.toLowerCase();
+
+    if (command === "quit") {
       return cancelSession();
     }
 
     if (input === "") {
       showMessage(
         "Please enter a character name."
+      );
+
+      return continueResult();
+    }
+
+    if (
+      RESERVED_NAME_COMMANDS.has(command)
+    ) {
+      showMessage(
+        `'${input.toUpperCase()}' is a reserved command and cannot be used as a character name.`
       );
 
       return continueResult();
@@ -248,7 +276,7 @@ return Object.freeze({
     showView(view);
 
     const input = normaliseInput(
-      await readInput("> ")
+      await readInput("Attributes> ")
     );
 
     const command = input.toLowerCase();
@@ -297,7 +325,7 @@ return Object.freeze({
     showView(view);
 
     const input = normaliseInput(
-      await readInput("> ")
+      await readInput("Skills> ")
     );
 
     const command = input.toLowerCase();
@@ -346,7 +374,7 @@ return Object.freeze({
     showView(view);
 
     const input = normaliseInput(
-      await readInput("> ")
+      await readInput("Profession> ")
     );
 
     const command = input.toLowerCase();
@@ -401,7 +429,7 @@ return Object.freeze({
     showView(view);
 
     const input = normaliseInput(
-      await readInput("> ")
+      await readInput("Choice> ")
     );
 
     const command = input.toLowerCase();
@@ -466,7 +494,7 @@ return Object.freeze({
     showView(view);
 
     const input = normaliseInput(
-      await readInput("> ")
+      await readInput("Review> ")
     );
 
     const command = input.toLowerCase();
@@ -509,6 +537,7 @@ return Object.freeze({
 
     return continueResult();
   }
+
   async function handleFinished(view) {
     showView(view);
 
@@ -520,7 +549,7 @@ return Object.freeze({
     });
   }
 
-return Object.freeze({
+  return Object.freeze({
     [CHARACTER_CREATION_STAGE.NAME]:
       handleName,
     [CHARACTER_CREATION_STAGE.ATTRIBUTES]:

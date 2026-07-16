@@ -81,13 +81,42 @@ function createCharacterCreationRenderer({
     "writeOutput"
   );
 
+  let lastRenderedView = null;
+  let pendingRenderedView = null;
+
+  function renderViewWithCache(view) {
+    const renderedView = renderView(view);
+
+    pendingRenderedView = renderedView;
+
+    return renderedView;
+  }
+
+  function writeWithViewCache(message) {
+    const isRenderedView =
+      pendingRenderedView !== null &&
+      message === pendingRenderedView;
+
+    if (isRenderedView) {
+      pendingRenderedView = null;
+
+      if (message === lastRenderedView) {
+        return;
+      }
+
+      lastRenderedView = message;
+    }
+
+    write(message);
+  }
+
   const stageHandlers =
     createCharacterCreationStageHandlers({
       controller:
         characterCreationController,
       readInput: read,
-      writeOutput: write,
-      renderView
+      writeOutput: writeWithViewCache,
+      renderView: renderViewWithCache
     });
 
   async function run({
@@ -99,6 +128,9 @@ function createCharacterCreationRenderer({
         ownerId,
         platform
       });
+
+    lastRenderedView = null;
+    pendingRenderedView = null;
 
     while (
       characterCreationController.isActive()
