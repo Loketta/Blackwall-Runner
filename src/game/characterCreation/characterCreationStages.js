@@ -1,0 +1,31 @@
+"use strict";
+
+const CHARACTER_CREATION_STAGE = Object.freeze({
+  NAME: "name",
+  ATTRIBUTES: "attributes",
+  SKILLS: "skills",
+  PROFESSION: "profession",
+  PROFESSION_CHOICES: "profession_choices",
+  REVIEW: "review",
+  FINISHED: "finished"
+});
+
+const CHARACTER_CREATION_STAGE_ORDER = Object.freeze([
+  CHARACTER_CREATION_STAGE.NAME,
+  CHARACTER_CREATION_STAGE.ATTRIBUTES,
+  CHARACTER_CREATION_STAGE.SKILLS,
+  CHARACTER_CREATION_STAGE.PROFESSION,
+  CHARACTER_CREATION_STAGE.PROFESSION_CHOICES,
+  CHARACTER_CREATION_STAGE.REVIEW,
+  CHARACTER_CREATION_STAGE.FINISHED
+]);
+
+function isCharacterCreationStage(stage) {
+  return CHARACTER_CREATION_STAGE_ORDER.includes(stage);
+}
+
+module.exports = {
+  CHARACTER_CREATION_STAGE,
+  CHARACTER_CREATION_STAGE_ORDER,
+  isCharacterCreationStage
+};
