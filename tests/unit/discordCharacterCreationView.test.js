@@ -900,9 +900,120 @@ test(
       /Medicine.*2/
     );
 
-    assert.deepStrictEqual(
-      payload.components,
-      []
+    assert.strictEqual(
+      payload.components.length,
+      5
+    );
+
+    const buttons =
+      payload.components.flatMap(
+        (row) => row.components
+      );
+
+    assert.ok(
+      buttons.some(
+        (button) =>
+          button.custom_id ===
+          "character_creation:skill:athletics:decrease:0"
+      )
+    );
+
+    assert.ok(
+      buttons.some(
+        (button) =>
+          button.custom_id ===
+          "character_creation:skill:computers:increase:0"
+      )
+    );
+
+    assert.ok(
+      buttons.some(
+        (button) =>
+          button.custom_id ===
+          "character_creation:skills_page:1"
+      )
+    );
+  }
+);
+
+test(
+  "Renders a requested skills page through presentation options",
+  () => {
+    const view =
+      createSkillsView();
+
+    const payload =
+      createDiscordCharacterCreationPayload(
+        view,
+        {
+          skillPage: 1
+        }
+      );
+
+    const buttons =
+      payload.components.flatMap(
+        (row) => row.components
+      );
+
+    assert.ok(
+      buttons.some(
+        (button) =>
+          button.custom_id ===
+          "character_creation:skill:leadership:decrease:1"
+      )
+    );
+
+    assert.ok(
+      buttons.some(
+        (button) =>
+          button.custom_id ===
+          "character_creation:skill:tactics:increase:1"
+      )
+    );
+
+    assert.strictEqual(
+      buttons.some(
+        (button) =>
+          button.custom_id.includes(
+            ":athletics:"
+          )
+      ),
+      false
+    );
+
+    const previousPage =
+      buttons.find(
+        (button) =>
+          button.custom_id ===
+          "character_creation:skills_page:0"
+      );
+
+    const nextPage =
+      buttons.find(
+        (button) =>
+          button.custom_id ===
+          "character_creation:skills_page:1"
+      );
+
+    assert.ok(previousPage);
+    assert.ok(nextPage);
+
+    assert.strictEqual(
+      previousPage.disabled,
+      false
+    );
+
+    assert.strictEqual(
+      nextPage.disabled,
+      true
+    );
+
+    assert.strictEqual(
+      Object.prototype.hasOwnProperty.call(
+        view,
+        "skillPage"
+      ),
+      false
     );
   }
 );

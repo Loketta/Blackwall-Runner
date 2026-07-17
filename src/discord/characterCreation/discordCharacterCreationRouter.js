@@ -67,7 +67,8 @@ function requireNonEmptyString(
 
   return value.trim();
 }
-
+const SKILL_PAGE_ACTION_PREFIX =
+  "character_creation:skills_page:";
 function parseSkillAction(
   customId
 ) {
@@ -88,21 +89,30 @@ function parseSkillAction(
   const parts =
     remainder.split(":");
 
-  if (parts.length !== 2) {
+  if (
+    parts.length !== 2 &&
+    parts.length !== 3
+  ) {
     return null;
   }
 
   const [
     skillId,
-    direction
+    direction,
+    pageText = "0"
   ] = parts;
+
+  const page =
+    Number(pageText);
 
   if (
     skillId.trim() === "" ||
     (
       direction !== "increase" &&
       direction !== "decrease"
-    )
+    ) ||
+    !Number.isInteger(page) ||
+    page < 0
   ) {
     return null;
   }
@@ -110,9 +120,42 @@ function parseSkillAction(
   return Object.freeze({
     skillId:
       skillId.trim(),
-    direction
+    direction,
+    page
   });
 }
+function parseSkillPageAction(
+  customId
+) {
+  if (
+    typeof customId !== "string" ||
+    !customId.startsWith(
+      SKILL_PAGE_ACTION_PREFIX
+    )
+  ) {
+    return null;
+  }
+
+  const pageText =
+    customId.slice(
+      SKILL_PAGE_ACTION_PREFIX.length
+    );
+
+  const page =
+    Number(pageText);
+
+  if (
+    !Number.isInteger(page) ||
+    page < 0
+  ) {
+    return null;
+  }
+
+  return Object.freeze({
+    page
+  });
+}
+
 function parseAttributeAction(
   customId
 ) {
@@ -387,8 +430,7 @@ function createDiscordCharacterCreationRouter({
       view
     });
   }
-
-  async function handleSkillAction(
+async function handleSkillAction(
     interaction,
     action
   ) {
@@ -449,7 +491,13 @@ function createDiscordCharacterCreationRouter({
       });
 
     await interaction.update(
-      renderView(view)
+      renderView(
+        view,
+        {
+          skillPage:
+            action.page
+        }
+      )
     );
 
     return Object.freeze({
@@ -461,9 +509,62 @@ function createDiscordCharacterCreationRouter({
       skillId:
         action.skillId,
       value: nextValue,
+      skillPage:
+        action.page,
       view
     });
   }
+async function handleSkillPageAction(
+    interaction,
+    action
+  ) {
+    const identity =
+      createInteractionIdentity(
+        interaction
+      );
+
+    const session =
+      requireSession(
+        sessionRegistry,
+        identity
+      );
+
+    requireFunction(
+      session.getCurrentView,
+      "session.getCurrentView"
+    );
+
+    const view =
+      session.getCurrentView();
+
+    if (
+      view.stage !==
+        "skills"
+    ) {
+      throw new Error(
+        "Skill page controls are only available during the skills stage"
+      );
+    }
+
+    await interaction.update(
+      renderView(
+        view,
+        {
+          skillPage:
+            action.page
+        }
+      )
+    );
+
+    return Object.freeze({
+      handled: true,
+      action: "change_skills_page",
+      skillPage:
+        action.page,
+      view
+    });
+  }
+
   async function handleAttributeAction(
     interaction,
     action
@@ -644,8 +745,7 @@ function createDiscordCharacterCreationRouter({
       result
     });
   }
-
-  async function route(interaction) {
+async function route(interaction) {
     requireObject(
       interaction,
       "interaction"
@@ -727,6 +827,22 @@ function createDiscordCharacterCreationRouter({
           skillAction
         );
       }
+      const skillPageAction =
+        parseSkillPageAction(
+          interaction.customId
+        );
+
+      if (skillPageAction) {
+        requireFunction(
+          interaction.update,
+          "interaction.update"
+        );
+
+        return handleSkillPageAction(
+          interaction,
+          skillPageAction
+        );
+      }
 
             if (
         interaction.customId ===
@@ -796,13 +912,15 @@ if (
 }
 
 module.exports = {
-    SKILL_ACTION_PREFIX,
-ATTRIBUTE_ACTION_PREFIX,
+  ATTRIBUTE_ACTION_PREFIX,
   CHARACTER_CREATION_ACTION,
   CHARACTER_NAME_INPUT_ID,
   CREATE_CHARACTER_COMMAND,
+  SKILL_ACTION_PREFIX,
+  SKILL_PAGE_ACTION_PREFIX,
   createDiscordCharacterCreationRouter,
   createInteractionIdentity,
   parseAttributeAction,
-  parseSkillAction
+  parseSkillAction,
+  parseSkillPageAction
 };

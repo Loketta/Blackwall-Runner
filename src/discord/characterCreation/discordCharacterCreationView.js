@@ -33,6 +33,11 @@ const DISCORD_CHARACTER_CREATION_ACTION =
     CANCEL:
       "character_creation:cancel"
   });
+const SKILLS_PER_PAGE = 8;
+
+const SKILL_PAGE_ACTION_PREFIX =
+  "character_creation:skills_page:";
+
 
 function requireView(view) {
   if (
@@ -432,8 +437,279 @@ function chunkLines(
 
   return chunks;
 }
+function getSkillsPage(
+  view,
+  options = {}
+) {
+  const values =
+    view.values &&
+    typeof view.values === "object"
+      ? view.values
+      : {};
 
-function createSkillsPayload(view) {
+  const entries =
+    Object.entries(values);
+
+  const pageCount =
+    Math.max(
+      1,
+      Math.ceil(
+        entries.length /
+        SKILLS_PER_PAGE
+      )
+    );
+
+  const requestedPage =
+    Number.isInteger(
+      options.skillPage
+    )
+      ? options.skillPage
+      : 0;
+
+  const page =
+    Math.min(
+      Math.max(
+        requestedPage,
+        0
+      ),
+      pageCount - 1
+    );
+
+  const firstIndex =
+    page * SKILLS_PER_PAGE;
+
+  return Object.freeze({
+    page,
+    pageCount,
+    entries:
+      entries.slice(
+        firstIndex,
+        firstIndex +
+          SKILLS_PER_PAGE
+      )
+  });
+}
+
+function createSkillAdjustmentButtons(
+  view,
+  options = {}
+) {
+  const rules =
+    view.rules &&
+    typeof view.rules === "object"
+      ? view.rules
+      : {};
+
+  const skillOptions =
+    Array.isArray(view.options)
+      ? view.options
+      : [];
+
+  const minimum =
+    Number.isInteger(
+      rules.minimum
+    )
+      ? rules.minimum
+      : 0;
+
+  const maximum =
+    Number.isInteger(
+      rules.maximum
+    )
+      ? rules.maximum
+      : 4;
+
+  const remainingPoints =
+    Number.isInteger(
+      view.remainingPoints
+    )
+      ? view.remainingPoints
+      : 0;
+
+  const page =
+    getSkillsPage(
+    view,
+    options
+  );
+
+  return page.entries.flatMap(
+    ([skillId, value]) => {
+      const displayName =
+        getSkillDisplayName(
+          skillId,
+          skillOptions
+        );
+
+      const decreaseButton =
+        new ButtonBuilder()
+          .setCustomId(
+            `character_creation:skill:${skillId}:decrease:${page.page}`
+          )
+          .setLabel(
+            `- ${displayName}`
+          )
+          .setStyle(
+            ButtonStyle.Secondary
+          )
+          .setDisabled(
+            !Number.isInteger(value) ||
+            value <= minimum
+          );
+
+      const increaseButton =
+        new ButtonBuilder()
+          .setCustomId(
+            `character_creation:skill:${skillId}:increase:${page.page}`
+          )
+          .setLabel(
+            `+ ${displayName}`
+          )
+          .setStyle(
+            ButtonStyle.Primary
+          )
+          .setDisabled(
+            !Number.isInteger(value) ||
+            value >= maximum ||
+            remainingPoints <= 0
+          );
+
+      return [
+        decreaseButton,
+        increaseButton
+      ];
+    }
+  );
+}
+
+function createSkillsComponents(
+  view,
+  options = {}
+) {
+  const page =
+    getSkillsPage(
+    view,
+    options
+  );
+
+  const adjustmentRows =
+    createComponentRows(
+      createSkillAdjustmentButtons(
+        view,
+        options
+      )
+    );
+
+  if (
+    adjustmentRows.length > 4
+  ) {
+    throw new Error(
+      "Skills page exceeds the Discord component row limit"
+    );
+  }
+
+  const previousPageButton =
+    new ButtonBuilder()
+      .setCustomId(
+        `${SKILL_PAGE_ACTION_PREFIX}${
+          Math.max(
+            page.page - 1,
+            0
+          )
+        }`
+      )
+      .setLabel(
+        "Skills Back"
+      )
+      .setStyle(
+        ButtonStyle.Secondary
+      )
+      .setDisabled(
+        page.page <= 0
+      );
+
+  const nextPageButton =
+    new ButtonBuilder()
+      .setCustomId(
+        `${SKILL_PAGE_ACTION_PREFIX}${
+          Math.min(
+            page.page + 1,
+            page.pageCount - 1
+          )
+        }`
+      )
+      .setLabel(
+        "Skills Next"
+      )
+      .setStyle(
+        ButtonStyle.Secondary
+      )
+      .setDisabled(
+        page.page >=
+          page.pageCount - 1
+      );
+
+  const previousStageButton =
+    new ButtonBuilder()
+      .setCustomId(
+        DISCORD_CHARACTER_CREATION_ACTION.PREVIOUS
+      )
+      .setLabel(
+        "Previous"
+      )
+      .setStyle(
+        ButtonStyle.Secondary
+      )
+      .setDisabled(
+        view.canMovePrevious !== true
+      );
+
+  const nextStageButton =
+    new ButtonBuilder()
+      .setCustomId(
+        DISCORD_CHARACTER_CREATION_ACTION.NEXT
+      )
+      .setLabel(
+        "Next"
+      )
+      .setStyle(
+        ButtonStyle.Primary
+      )
+      .setDisabled(
+        view.canMoveNext !== true
+      );
+
+  const cancelButton =
+    new ButtonBuilder()
+      .setCustomId(
+        DISCORD_CHARACTER_CREATION_ACTION.CANCEL
+      )
+      .setLabel(
+        "Save and Exit"
+      )
+      .setStyle(
+        ButtonStyle.Secondary
+      );
+
+  const navigationRow =
+    new ActionRowBuilder()
+      .addComponents(
+        previousPageButton,
+        nextPageButton,
+        previousStageButton,
+        nextStageButton,
+        cancelButton
+      )
+      .toJSON();
+
+  return [
+    ...adjustmentRows,
+    navigationRow
+  ];
+}
+function createSkillsPayload(
+  view,
+  options = {}
+) {
   const values =
     view.values &&
     typeof view.values === "object"
@@ -446,7 +722,7 @@ function createSkillsPayload(view) {
       ? view.rules
       : {};
 
-  const options =
+  const skillOptions =
     Array.isArray(view.options)
       ? view.options
       : [];
@@ -488,7 +764,7 @@ function createSkillsPayload(view) {
       .map(([skillId, value]) =>
         `**${getSkillDisplayName(
           skillId,
-          options
+          skillOptions
         )}:** ${value}`
       );
 
@@ -529,7 +805,11 @@ function createSkillsPayload(view) {
     embeds: [
       embed.toJSON()
     ],
-    components: []
+    components:
+      createSkillsComponents(
+      view,
+      options
+    )
   });
 }
 function formatDisplayValue(value) {
@@ -1138,7 +1418,8 @@ function createFinishedPayload(view) {
   });
 }
 function createDiscordCharacterCreationPayload(
-  suppliedView
+  suppliedView,
+  options = {}
 ) {
   const view = requireView(suppliedView);
 
@@ -1160,7 +1441,10 @@ function createDiscordCharacterCreationPayload(
     view.stage ===
     CHARACTER_CREATION_STAGE.SKILLS
   ) {
-    return createSkillsPayload(view);
+    return createSkillsPayload(
+      view,
+      options
+    );
   }
 
   if (

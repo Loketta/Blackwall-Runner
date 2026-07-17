@@ -9,7 +9,11 @@ const {
   CREATE_CHARACTER_COMMAND,
   createDiscordCharacterCreationRouter,
   createInteractionIdentity,
-  parseAttributeAction
+  parseAttributeAction,
+  SKILL_ACTION_PREFIX,
+  SKILL_PAGE_ACTION_PREFIX,
+  parseSkillAction,
+  parseSkillPageAction
 } = require(
   "../../src/discord/characterCreation/discordCharacterCreationRouter"
 );
@@ -379,10 +383,15 @@ function createRouterHarness() {
     createRegistryHarness();
 
   const renderCalls = [];
+  const renderOptionsCalls = [];
   const modalCalls = [];
 
-  function renderView(view) {
+  function renderView(
+    view,
+    options = {}
+  ) {
     renderCalls.push(view);
+    renderOptionsCalls.push(options);
 
     return {
       embeds: [
@@ -423,6 +432,7 @@ function createRouterHarness() {
     router,
     registryHarness,
     renderCalls,
+    renderOptionsCalls,
     modalCalls
   };
 }
@@ -1079,6 +1089,422 @@ test(
     );
   }
 );
+test(
+  "Parses skill interaction actions",
+  () => {
+    assert.deepStrictEqual(
+      parseSkillAction(
+        `${SKILL_ACTION_PREFIX}computers:increase`
+      ),
+      {
+        skillId: "computers",
+        direction: "increase",
+        page: 0
+      }
+    );
+
+    assert.deepStrictEqual(
+      parseSkillAction(
+        `${SKILL_ACTION_PREFIX}stealth:decrease`
+      ),
+      {
+        skillId: "stealth",
+        direction: "decrease",
+        page: 0
+      }
+    );
+
+    assert.strictEqual(
+      parseSkillAction(
+        "character_creation:other"
+      ),
+      null
+    );
+
+    assert.strictEqual(
+      parseSkillAction(
+        `${SKILL_ACTION_PREFIX}computers:invalid`
+      ),
+      null
+    );
+  }
+);
+
+test(
+  "Parses paged skill interaction actions",
+  () => {
+    assert.deepStrictEqual(
+      parseSkillAction(
+        `${SKILL_ACTION_PREFIX}computers:increase:2`
+      ),
+      {
+        skillId: "computers",
+        direction: "increase",
+        page: 2
+      }
+    );
+
+    assert.deepStrictEqual(
+      parseSkillPageAction(
+        `${SKILL_PAGE_ACTION_PREFIX}3`
+      ),
+      {
+        page: 3
+      }
+    );
+
+    assert.strictEqual(
+      parseSkillPageAction(
+        `${SKILL_PAGE_ACTION_PREFIX}-1`
+      ),
+      null
+    );
+
+    assert.strictEqual(
+      parseSkillPageAction(
+        `${SKILL_PAGE_ACTION_PREFIX}invalid`
+      ),
+      null
+    );
+  }
+);
+
+test(
+  "Increases a skill from a Discord button",
+  async () => {
+    const {
+      router,
+      registryHarness
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    registryHarness
+      .sessionHarness
+      .session
+      .submitName("Naoko");
+
+    registryHarness
+      .sessionHarness
+      .session
+      .moveToSkills();
+
+    const {
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        `${SKILL_ACTION_PREFIX}computers:increase`,
+
+      isButton() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.action,
+      "increase_skill"
+    );
+
+    assert.strictEqual(
+      result.skillId,
+      "computers"
+    );
+
+    assert.strictEqual(
+      result.value,
+      4
+    );
+
+    assert.deepStrictEqual(
+      registryHarness
+        .sessionHarness
+        .calls
+        .find(
+          (call) =>
+            call.method === "setSkill"
+        )
+        .input,
+      {
+        skillId: "computers",
+        value: 4
+      }
+    );
+
+    assert.strictEqual(
+      calls.some(
+        (call) =>
+          call.method === "update"
+      ),
+      true
+    );
+  }
+);
+
+test(
+  "Decreases a skill from a Discord button",
+  async () => {
+    const {
+      router,
+      registryHarness
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    registryHarness
+      .sessionHarness
+      .session
+      .submitName("Naoko");
+
+    registryHarness
+      .sessionHarness
+      .session
+      .moveToSkills();
+
+    const {
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        `${SKILL_ACTION_PREFIX}computers:decrease`,
+
+      isButton() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.action,
+      "decrease_skill"
+    );
+
+    assert.strictEqual(
+      result.skillId,
+      "computers"
+    );
+
+    assert.strictEqual(
+      result.value,
+      2
+    );
+
+    assert.deepStrictEqual(
+      registryHarness
+        .sessionHarness
+        .calls
+        .find(
+          (call) =>
+            call.method === "setSkill"
+        )
+        .input,
+      {
+        skillId: "computers",
+        value: 2
+      }
+    );
+
+    assert.strictEqual(
+      calls.some(
+        (call) =>
+          call.method === "update"
+      ),
+      true
+    );
+  }
+);
+test(
+  "Changes the displayed skills page without changing the controller view",
+  async () => {
+    const {
+      router,
+      registryHarness,
+      renderCalls,
+      renderOptionsCalls
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    registryHarness
+      .sessionHarness
+      .session
+      .submitName("Naoko");
+
+    registryHarness
+      .sessionHarness
+      .session
+      .moveToSkills();
+
+    const {
+      interaction
+    } = createInteraction({
+      customId:
+        `${SKILL_PAGE_ACTION_PREFIX}1`,
+
+      isButton() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.action,
+      "change_skills_page"
+    );
+
+    assert.strictEqual(
+      result.skillPage,
+      1
+    );
+
+    assert.strictEqual(
+      renderCalls[
+        renderCalls.length - 1
+      ],
+      result.view
+    );
+
+    assert.deepStrictEqual(
+      renderOptionsCalls[
+        renderOptionsCalls.length - 1
+      ],
+      {
+        skillPage: 1
+      }
+    );
+
+    assert.strictEqual(
+      Object.prototype.hasOwnProperty.call(
+        result.view,
+        "skillPage"
+      ),
+      false
+    );
+  }
+);
+
+test(
+  "Preserves the displayed page after changing a skill",
+  async () => {
+    const {
+      router,
+      registryHarness,
+      renderCalls,
+      renderOptionsCalls
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    registryHarness
+      .sessionHarness
+      .session
+      .submitName("Naoko");
+
+    registryHarness
+      .sessionHarness
+      .session
+      .moveToSkills();
+
+    const {
+      interaction
+    } = createInteraction({
+      customId:
+        `${SKILL_ACTION_PREFIX}computers:increase:2`,
+
+      isButton() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.skillPage,
+      2
+    );
+
+    assert.strictEqual(
+      renderCalls[
+        renderCalls.length - 1
+      ],
+      result.view
+    );
+
+    assert.deepStrictEqual(
+      renderOptionsCalls[
+        renderOptionsCalls.length - 1
+      ],
+      {
+        skillPage: 2
+      }
+    );
+
+    assert.strictEqual(
+      Object.prototype.hasOwnProperty.call(
+        result.view,
+        "skillPage"
+      ),
+      false
+    );
+  }
+);
+
 test(
   "Cancels character creation and removes the session",
   async () => {
