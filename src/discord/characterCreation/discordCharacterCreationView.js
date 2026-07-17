@@ -7,7 +7,8 @@ const {
   EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle
+  TextInputStyle,
+  StringSelectMenuBuilder
 } = require("discord.js");
 
 const CHARACTER_CREATION_STAGE = Object.freeze({
@@ -30,6 +31,8 @@ const DISCORD_CHARACTER_CREATION_ACTION =
       "character_creation:previous",
     NEXT:
       "character_creation:next",
+    SELECT_PROFESSION:
+      "character_creation:profession",
     CANCEL:
       "character_creation:cancel"
   });
@@ -39,6 +42,9 @@ const SKILL_PAGE_ACTION_PREFIX =
   "character_creation:skills_page:";
 
 
+
+const PROFESSION_CHOICE_ACTION_PREFIX =
+  "character_creation:profession_choice:";
 function requireView(view) {
   if (
     !view ||
@@ -989,6 +995,64 @@ function createProfessionOptionText(option) {
   );
 }
 
+function createProfessionComponents(
+  options,
+  professionId
+) {
+  if (options.length === 0) {
+    return [];
+  }
+
+  const professionMenu =
+    new StringSelectMenuBuilder()
+      .setCustomId(
+        DISCORD_CHARACTER_CREATION_ACTION
+          .SELECT_PROFESSION
+      )
+      .setPlaceholder(
+        "Choose a profession"
+      )
+      .setMinValues(1)
+      .setMaxValues(1)
+      .addOptions(
+        options.map(
+          (option, index) => {
+            const optionId =
+              option &&
+              typeof option.id === "string" &&
+              option.id.trim() !== ""
+                ? option.id.trim()
+                : `profession_${index + 1}`;
+
+            const optionName =
+              option &&
+              typeof option.name === "string" &&
+              option.name.trim() !== ""
+                ? option.name.trim()
+                : formatAttributeName(
+                    optionId
+                  );
+
+            return {
+              label:
+                optionName.slice(0, 100),
+              value:
+                optionId.slice(0, 100),
+              default:
+                optionId === professionId
+            };
+          }
+        )
+      );
+
+  return [
+    new ActionRowBuilder()
+      .addComponents(
+        professionMenu
+      )
+      .toJSON()
+  ];
+}
 function createProfessionPayload(view) {
   const options =
     Array.isArray(view.options)
@@ -1055,8 +1119,159 @@ function createProfessionPayload(view) {
     embeds: [
       embed.toJSON()
     ],
-    components: []
+    components:
+      createProfessionComponents(
+        options,
+        professionId
+      )
   });
+}
+function createProfessionChoiceComponents(
+  choices
+) {
+  const selectableChoices =
+    choices.filter(
+      (choice) =>
+        choice &&
+        typeof choice.id === "string" &&
+        choice.id.trim() !== "" &&
+        Array.isArray(choice.options) &&
+        choice.options.length > 0
+    );
+
+  if (selectableChoices.length === 0) {
+    return [];
+  }
+
+  if (selectableChoices.length > 5) {
+    throw new Error(
+      "Profession choices exceed the Discord component row limit."
+    );
+  }
+
+  return selectableChoices.map(
+    (choice, choiceIndex) => {
+      const choiceId =
+        choice.id.trim();
+
+      const minimumSelections =
+        Number.isInteger(
+          choice.minimumSelections
+        )
+          ? Math.max(
+              0,
+              choice.minimumSelections
+            )
+          : choice.required === true
+            ? 1
+            : 0;
+
+      const maximumSelections =
+        Number.isInteger(
+          choice.maximumSelections
+        )
+          ? Math.max(
+              1,
+              choice.maximumSelections
+            )
+          : 1;
+
+      const boundedMaximumSelections =
+        Math.min(
+          maximumSelections,
+          choice.options.length,
+          25
+        );
+
+      const boundedMinimumSelections =
+        Math.min(
+          minimumSelections,
+          boundedMaximumSelections
+        );
+
+      const currentValues =
+        Array.isArray(choice.value)
+          ? choice.value.filter(
+              (value) =>
+                typeof value === "string"
+            )
+          : typeof choice.value === "string"
+            ? [choice.value]
+            : [];
+
+      const menu =
+        new StringSelectMenuBuilder()
+          .setCustomId(
+            `${PROFESSION_CHOICE_ACTION_PREFIX}${choiceId}`
+          )
+          .setPlaceholder(
+            `Choose ${formatAttributeName(
+              choiceId
+            )}`.slice(0, 150)
+          )
+          .setMinValues(
+            boundedMinimumSelections
+          )
+          .setMaxValues(
+            boundedMaximumSelections
+          )
+          .addOptions(
+            choice.options
+              .slice(0, 25)
+              .map(
+                (option, optionIndex) => {
+                  const optionId =
+                    option &&
+                    typeof option.id ===
+                      "string" &&
+                    option.id.trim() !== ""
+                      ? option.id.trim()
+                      : `option_${
+                          optionIndex + 1
+                        }`;
+
+                  const optionName =
+                    option &&
+                    typeof option.name ===
+                      "string" &&
+                    option.name.trim() !== ""
+                      ? option.name.trim()
+                      : formatAttributeName(
+                          optionId
+                        );
+
+                  const description =
+                    option &&
+                    typeof option.category ===
+                      "string" &&
+                    option.category.trim() !== ""
+                      ? formatAttributeName(
+                          option.category
+                        ).slice(0, 100)
+                      : null;
+
+                  return {
+                    label:
+                      optionName.slice(0, 100),
+                    value:
+                      optionId.slice(0, 100),
+                    default:
+                      currentValues.includes(
+                        optionId
+                      ),
+                    ...(description
+                      ? { description }
+                      : {})
+                  };
+                }
+              )
+          );
+
+      return new ActionRowBuilder()
+        .addComponents(menu)
+        .toJSON();
+    }
+  );
 }
 function createProfessionChoicesPayload(view) {
   const choices =
@@ -1119,7 +1334,9 @@ function createProfessionChoicesPayload(view) {
     embeds: [
       embed.toJSON()
     ],
-    components: []
+    components: createProfessionChoiceComponents(
+        choices
+      )
   });
 }
 function formatKeyValueLines(values) {

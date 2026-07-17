@@ -1166,10 +1166,70 @@ test(
       hackerField.value,
       /Hijack/
     );
+    assert.strictEqual(
+      payload.components.length,
+      1
+    );
 
-    assert.deepStrictEqual(
-      payload.components,
-      []
+    const professionRow =
+      payload.components[0];
+
+    assert.strictEqual(
+      professionRow.type,
+      ComponentType.ActionRow
+    );
+
+    assert.strictEqual(
+      professionRow.components.length,
+      1
+    );
+
+    const professionMenu =
+      professionRow.components[0];
+
+    assert.strictEqual(
+      professionMenu.type,
+      ComponentType.StringSelect
+    );
+
+    assert.strictEqual(
+      professionMenu.custom_id,
+      DISCORD_CHARACTER_CREATION_ACTION
+        .SELECT_PROFESSION
+    );
+
+    assert.strictEqual(
+      professionMenu.min_values,
+      1
+    );
+
+    assert.strictEqual(
+      professionMenu.max_values,
+      1
+    );
+
+    assert.ok(
+      professionMenu.options.some(
+        (option) =>
+          option.value ===
+            "melee_specialist"
+      )
+    );
+
+    assert.ok(
+      professionMenu.options.some(
+        (option) =>
+          option.value ===
+            "hacker"
+      )
+    );
+
+    assert.strictEqual(
+      professionMenu.options.some(
+        (option) =>
+          option.default === true
+      ),
+      false
     );
   }
 );
@@ -1205,7 +1265,30 @@ test(
           "Hacker — Selected"
       )
     );
-  }
+    const professionMenu =
+      payload.components[0]
+        .components[0];
+
+    const selectedMenuOption =
+      professionMenu.options.find(
+        (option) =>
+          option.value === "hacker"
+      );
+
+    assert.ok(selectedMenuOption);
+
+    assert.strictEqual(
+      selectedMenuOption.default,
+      true
+    );
+
+    assert.strictEqual(
+      professionMenu.options.filter(
+        (option) =>
+          option.default === true
+      ).length,
+      1
+    );}
 );
 
 test(
@@ -1313,56 +1396,32 @@ test(
       /Shotgun/
     );
 
-    assert.deepStrictEqual(
-      payload.components,
-      []
+    assert.strictEqual(
+      payload.components.length,
+      1
     );
-  }
-);
 
-test(
-  "Marks the selected profession choice",
-  () => {
-    const payload =
-      createDiscordCharacterCreationPayload(
-        createProfessionChoicesView({
-          value: "pistol"
-        })
-      );
-
-    const text =
-      payload.embeds[0]
-        .fields[0]
-        .value;
-
-    assert.match(
-      text,
-      /Pistol.*Selected/
-    );
-  }
-);
-
-test(
-  "Handles professions with no choices",
-  () => {
-    const payload =
-      createDiscordCharacterCreationPayload({
-        stage:
-          "profession_choices",
-        stageNumber: 5,
-        stageCount: 7,
-        title:
-          "Profession Choices",
-        description: "",
-        values: {},
-        choices: []
-      });
+    const professionChoiceMenu =
+      payload.components[0].components[0];
 
     assert.strictEqual(
-      payload.embeds[0]
-        .fields[0]
-        .value,
-      "This profession has no additional choices."
+      professionChoiceMenu.custom_id,
+      "character_creation:profession_choice:weapon_type"
+    );
+
+    assert.strictEqual(
+      professionChoiceMenu.min_values,
+      1
+    );
+
+    assert.strictEqual(
+      professionChoiceMenu.max_values,
+      1
+    );
+
+    assert.strictEqual(
+      professionChoiceMenu.options.length,
+      3
     );
   }
 );
@@ -1616,6 +1675,103 @@ test(
     );
   }
 );
+
+  test(
+    "Marks the selected profession choice menu option",
+    () => {
+      const payload =
+        createDiscordCharacterCreationPayload({
+          stage: "profession_choices",
+          stageNumber: 5,
+          stageCount: 7,
+          title: "Profession Choices",
+          description:
+            "Complete the choices required by your profession.",
+          choices: [
+            {
+              id: "operator_weapon_type",
+              type: "weapon_type",
+              required: true,
+              minimumSelections: 1,
+              maximumSelections: 1,
+              value: "rifle",
+              options: [
+                {
+                  id: "pistol",
+                  name: "Pistol",
+                  category: "ranged"
+                },
+                {
+                  id: "rifle",
+                  name: "Rifle",
+                  category: "ranged"
+                }
+              ]
+            }
+          ],
+          canMovePrevious: true,
+          canMoveNext: true
+        });
+
+      const menu =
+        payload.components[0].components[0];
+
+      const pistolOption =
+        menu.options.find(
+          (option) =>
+            option.value === "pistol"
+        );
+
+      const rifleOption =
+        menu.options.find(
+          (option) =>
+            option.value === "rifle"
+        );
+
+      assert.strictEqual(
+        pistolOption.default,
+        false
+      );
+
+      assert.strictEqual(
+        rifleOption.default,
+        true
+      );
+    }
+  );
+
+  test(
+    "Renders no profession choice menu when no options are available",
+    () => {
+      const payload =
+        createDiscordCharacterCreationPayload({
+          stage: "profession_choices",
+          stageNumber: 5,
+          stageCount: 7,
+          title: "Profession Choices",
+          description:
+            "Complete the choices required by your profession.",
+          choices: [
+            {
+              id: "empty_choice",
+              type: "weapon_type",
+              required: false,
+              minimumSelections: 0,
+              maximumSelections: 1,
+              value: null,
+              options: []
+            }
+          ],
+          canMovePrevious: true,
+          canMoveNext: true
+        });
+
+      assert.deepStrictEqual(
+        payload.components,
+        []
+      );
+    }
+  );
 
 async function run() {
   console.log(

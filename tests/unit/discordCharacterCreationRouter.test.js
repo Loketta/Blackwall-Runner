@@ -149,7 +149,19 @@ function createSessionHarness() {
 
       return currentView;
     },
-    moveToSkills() {
+
+    moveToProfession() {
+      currentView = Object.freeze({
+        stage: "profession",
+        stageNumber: 4,
+        title: "Profession",
+        values: Object.freeze({
+          professionId: null
+        })
+      });
+
+      return currentView;
+    },    moveToSkills() {
       currentView = skillView;
     },
     submitName(name) {
@@ -163,6 +175,26 @@ function createSessionHarness() {
       return currentView;
     },
 
+    setProfession({
+      professionId
+    }) {
+      calls.push({
+        method: "setProfession",
+        input: {
+          professionId
+        }
+      });
+
+      currentView = Object.freeze({
+        ...currentView,
+        values: Object.freeze({
+          ...currentView.values,
+          professionId
+        })
+      });
+
+      return currentView;
+    },
     previous() {
       calls.push({
         method: "previous"
@@ -324,6 +356,7 @@ function createInteraction(
     commandName: null,
     customId: null,
 
+    values: [],
     isChatInputCommand() {
       return false;
     },
@@ -333,6 +366,9 @@ function createInteraction(
     },
 
     isModalSubmit() {
+      return false;
+    },
+    isStringSelectMenu() {
       return false;
     },
 
@@ -1505,6 +1541,153 @@ test(
   }
 );
 
+test(
+  "Selects a profession from a Discord select menu",
+  async () => {
+    const {
+      router,
+      registryHarness,
+      renderCalls
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    registryHarness
+      .sessionHarness
+      .session
+      .moveToProfession();
+
+    const {
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        CHARACTER_CREATION_ACTION
+          .SELECT_PROFESSION,
+
+      values: [
+        "hacker"
+      ],
+
+      isStringSelectMenu() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.action,
+      "select_profession"
+    );
+
+    assert.strictEqual(
+      result.professionId,
+      "hacker"
+    );
+
+    assert.strictEqual(
+      result.view.stage,
+      "profession"
+    );
+
+    assert.strictEqual(
+      result.view.values.professionId,
+      "hacker"
+    );
+
+    const setCall =
+      registryHarness
+        .sessionHarness
+        .calls
+        .find(
+          (call) =>
+            call.method ===
+            "setProfession"
+        );
+
+    assert.deepStrictEqual(
+      setCall,
+      {
+        method: "setProfession",
+        input: {
+          professionId: "hacker"
+        }
+      }
+    );
+
+    assert.strictEqual(
+      renderCalls.length,
+      1
+    );
+
+    const updateCalls =
+      calls.filter(
+        (call) =>
+          call.method === "update"
+      );
+
+    assert.strictEqual(
+      updateCalls.length,
+      1
+    );
+  }
+);
+
+test(
+  "Returns unhandled for unrelated select menus",
+  async () => {
+    const {
+      router
+    } = createRouterHarness();
+
+    const {
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        "character_creation:unrelated_select",
+
+      values: [
+        "hacker"
+      ],
+
+      isStringSelectMenu() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.deepStrictEqual(
+      result,
+      {
+        handled: false
+      }
+    );
+
+    assert.strictEqual(
+      calls.length,
+      0
+    );
+  }
+);
 test(
   "Cancels character creation and removes the session",
   async () => {

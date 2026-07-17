@@ -85,6 +85,43 @@ function createControllerHarness() {
       }
     );
 
+  const professionView =
+    createView(
+      "profession",
+      {
+        stageNumber: 4,
+        canMovePrevious: true,
+        values: {
+          professionId: null
+        }
+      }
+    );
+
+  const updatedProfessionView =
+    createView(
+      "profession",
+      {
+        stageNumber: 4,
+        canMovePrevious: true,
+        canMoveNext: true,
+        values: {
+          professionId: "engineer"
+        }
+      }
+    );
+  const updatedProfessionChoiceView =
+    createView(
+      "profession",
+      {
+        stageNumber: 4,
+        canMovePrevious: true,
+        canMoveNext: true,
+        values: {
+          professionId: "operator",
+          weaponType: "pistol"
+        }
+      }
+    );
   const reviewView =
     createView(
       "review",
@@ -160,6 +197,27 @@ function createControllerHarness() {
           updatedSkillView;
       }
 
+
+      if (
+        currentView.stage ===
+          "profession" &&
+        input.professionId ===
+          "engineer"
+      ) {
+        currentView =
+          updatedProfessionView;
+      }
+      if (
+        currentView.stage ===
+          "profession" &&
+        input.choiceId ===
+          "weaponType" &&
+        input.value ===
+          "pistol"
+      ) {
+        currentView =
+          updatedProfessionChoiceView;
+      }
       return currentView;
     },
 
@@ -227,12 +285,19 @@ function createControllerHarness() {
       updatedAttributeView,
       skillView,
       updatedSkillView,
+      professionView,
+      updatedProfessionView,
+
+      updatedProfessionChoiceView,
       reviewView,
       finishedView
     },
 
     moveToSkills() {
       currentView = skillView;
+    },
+    moveToProfession() {
+      currentView = professionView;
     },
     moveToReview() {
       currentView = reviewView;
@@ -634,6 +699,257 @@ test(
           value: 4.5
         }),
       /value must be an integer/
+    );
+  }
+);
+test(
+  "Updates a profession through the controller",
+  () => {
+    const {
+      session,
+      controllerHarness
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    controllerHarness.moveToProfession();
+
+    session.getCurrentView();
+
+    const view =
+      session.setProfession({
+        professionId: "engineer"
+      });
+
+    assert.strictEqual(
+      view.stage,
+      "profession"
+    );
+
+    assert.strictEqual(
+      view.values.professionId,
+      "engineer"
+    );
+
+    const submitCall =
+      controllerHarness.calls.find(
+        (call) =>
+          call.method === "submit" &&
+          call.input.professionId ===
+            "engineer"
+      );
+
+    assert.deepStrictEqual(
+      submitCall,
+      {
+        method: "submit",
+        input: {
+          professionId: "engineer"
+        }
+      }
+    );
+  }
+);
+
+test(
+  "Rejects profession updates outside the profession stage",
+  () => {
+    const {
+      session
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    assert.throws(
+      () =>
+        session.setProfession({
+          professionId: "engineer"
+        }),
+      /only be updated during the profession stage/
+    );
+  }
+);
+
+test(
+  "Requires valid profession update input",
+  () => {
+    const {
+      session,
+      controllerHarness
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    controllerHarness.moveToProfession();
+
+    session.getCurrentView();
+
+    assert.throws(
+      () =>
+        session.setProfession({
+          professionId: ""
+        }),
+      /professionId must be a non-empty string/
+    );
+
+    assert.throws(
+      () =>
+        session.setProfession({
+          professionId: "   "
+        }),
+      /professionId must be a non-empty string/
+    );
+  }
+);
+test(
+  "Updates a profession choice through the controller",
+  () => {
+    const {
+      session,
+      controllerHarness
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    controllerHarness.moveToProfession();
+
+    session.getCurrentView();
+
+    const view =
+      session.setProfessionChoice({
+        choiceId: "weaponType",
+        value: "pistol"
+      });
+
+    assert.strictEqual(
+      view.stage,
+      "profession"
+    );
+
+    assert.strictEqual(
+      view.values.weaponType,
+      "pistol"
+    );
+
+    const submitCall =
+      controllerHarness.calls.find(
+        (call) =>
+          call.method === "submit" &&
+          call.input.choiceId ===
+            "weaponType"
+      );
+
+    assert.deepStrictEqual(
+      submitCall,
+      {
+        method: "submit",
+        input: {
+          choiceId: "weaponType",
+          value: "pistol"
+        }
+      }
+    );
+  }
+);
+
+test(
+  "Rejects profession choice updates outside the profession stage",
+  () => {
+    const {
+      session
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    assert.throws(
+      () =>
+        session.setProfessionChoice({
+          choiceId: "weaponType",
+          value: "pistol"
+        }),
+      /only be updated during the profession stage/
+    );
+  }
+);
+
+test(
+  "Requires a valid profession choice ID",
+  () => {
+    const {
+      session,
+      controllerHarness
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    controllerHarness.moveToProfession();
+
+    session.getCurrentView();
+
+    assert.throws(
+      () =>
+        session.setProfessionChoice({
+          choiceId: "",
+          value: "pistol"
+        }),
+      /choiceId must be a non-empty string/
+    );
+
+    assert.throws(
+      () =>
+        session.setProfessionChoice({
+          choiceId: "   ",
+          value: "pistol"
+        }),
+      /choiceId must be a non-empty string/
+    );
+  }
+);
+
+test(
+  "Requires a valid profession choice value",
+  () => {
+    const {
+      session,
+      controllerHarness
+    } = createSessionHarness();
+
+    session.start({
+      ownerId: "discord-user-1"
+    });
+
+    controllerHarness.moveToProfession();
+
+    session.getCurrentView();
+
+    assert.throws(
+      () =>
+        session.setProfessionChoice({
+          choiceId: "weaponType",
+          value: ""
+        }),
+      /value must be a non-empty string/
+    );
+
+    assert.throws(
+      () =>
+        session.setProfessionChoice({
+          choiceId: "weaponType",
+          value: "   "
+        }),
+      /value must be a non-empty string/
     );
   }
 );

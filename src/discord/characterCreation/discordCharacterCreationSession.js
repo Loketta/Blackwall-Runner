@@ -235,6 +235,65 @@ function createDiscordCharacterCreationSession({
 
     return currentView;
   }
+  function setProfession({
+    professionId
+  }) {
+    requireStarted();
+
+    if (currentView.stage !== "profession") {
+      throw new Error(
+        "Professions can only be updated during the profession stage."
+      );
+    }
+
+    const normalisedProfessionId =
+      requireNonEmptyString(
+        professionId,
+        "professionId"
+      );
+
+    currentView =
+      controller.submit({
+        professionId:
+          normalisedProfessionId
+      });
+
+    return currentView;
+  }
+  function setProfessionChoice({
+    choiceId,
+    value
+  }) {
+    requireStarted();
+
+    if (currentView.stage !== "profession") {
+      throw new Error(
+        "Profession choices can only be updated during the profession stage."
+      );
+    }
+
+    const normalisedChoiceId =
+      requireNonEmptyString(
+        choiceId,
+        "choiceId"
+      );
+
+    const normalisedValue =
+      requireNonEmptyString(
+        value,
+        "value"
+      );
+
+    currentView =
+      controller.submit({
+        choiceId:
+          normalisedChoiceId,
+        value:
+          normalisedValue
+      });
+
+    return currentView;
+  }
   function previous() {
     requireStarted();
 
@@ -302,6 +361,9 @@ function createDiscordCharacterCreationSession({
     submitName,
     setAttribute,
     setSkill,
+    setProfession,
+
+    setProfessionChoice,
     previous,
     next,
     finalise,

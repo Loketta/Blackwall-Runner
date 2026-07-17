@@ -8,6 +8,8 @@ const CHARACTER_CREATION_ACTION = Object.freeze({
     "character_creation:set_name",
   SUBMIT_NAME:
     "character_creation:submit_name",
+  SELECT_PROFESSION:
+    "character_creation:select_profession",
   PREVIOUS:
     "character_creation:previous",
   NEXT:
@@ -564,6 +566,77 @@ async function handleSkillPageAction(
       view
     });
   }
+  async function handleProfessionSelection(
+    interaction
+  ) {
+    const identity =
+      createInteractionIdentity(
+        interaction
+      );
+
+    const session =
+      requireSession(
+        sessionRegistry,
+        identity
+      );
+
+    requireFunction(
+      session.getCurrentView,
+      "session.getCurrentView"
+    );
+
+    requireFunction(
+      session.setProfession,
+      "session.setProfession"
+    );
+
+    const currentView =
+      session.getCurrentView();
+
+    if (
+      currentView.stage !==
+        "profession"
+    ) {
+      throw new Error(
+        "Profession controls are only available during the profession stage"
+      );
+    }
+
+    const values =
+      Array.isArray(
+        interaction.values
+      )
+        ? interaction.values
+        : [];
+
+    if (values.length !== 1) {
+      throw new Error(
+        "Profession selection must contain exactly one value"
+      );
+    }
+
+    const professionId =
+      requireNonEmptyString(
+        values[0],
+        "interaction.values[0]"
+      );
+
+    const view =
+      session.setProfession({
+        professionId
+      });
+
+    await interaction.update(
+      renderView(view)
+    );
+
+    return Object.freeze({
+      handled: true,
+      action: "select_profession",
+      professionId,
+      view
+    });
+  }
 
   async function handleAttributeAction(
     interaction,
@@ -765,6 +838,10 @@ async function route(interaction) {
       interaction.isModalSubmit,
       "interaction.isModalSubmit"
     );
+    requireFunction(
+      interaction.isStringSelectMenu,
+      "interaction.isStringSelectMenu"
+    );
 
     if (
       interaction.isChatInputCommand() &&
@@ -885,6 +962,23 @@ if (
         );
       }
     }
+
+    if (
+      interaction.isStringSelectMenu() &&
+      interaction.customId ===
+        CHARACTER_CREATION_ACTION
+          .SELECT_PROFESSION
+    ) {
+      requireFunction(
+        interaction.update,
+        "interaction.update"
+      );
+
+      return handleProfessionSelection(
+        interaction
+      );
+    }
+
 
     if (
       interaction.isModalSubmit() &&
