@@ -997,9 +997,18 @@ function createProfessionOptionText(option) {
 }
 
 function createProfessionComponents(
-  options,
-  professionId
+  view
 ) {
+  const options =
+    Array.isArray(view.options)
+      ? view.options
+      : [];
+
+  const professionId =
+    typeof view.values?.professionId ===
+    "string"
+      ? view.values.professionId
+      : null;
   if (options.length === 0) {
     return [];
   }
@@ -1122,8 +1131,7 @@ function createProfessionPayload(view) {
     ],
     components:
       createProfessionComponents(
-        options,
-        professionId
+        view
       )
   });
 }
