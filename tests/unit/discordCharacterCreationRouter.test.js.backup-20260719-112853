@@ -20,15 +20,6 @@ const {
   "../../src/discord/characterCreation/discordCharacterCreationRouter"
 );
 
-const tests = [];
-
-function test(name, callback) {
-  tests.push({
-    name,
-    callback
-  });
-}
-
 test(
   "Uses the profession action ID emitted by the Discord view",
   () => {
@@ -39,6 +30,14 @@ test(
   }
 );
 
+const tests = [];
+
+function test(name, callback) {
+  tests.push({
+    name,
+    callback
+  });
+}
 
 function createView(
   stage,

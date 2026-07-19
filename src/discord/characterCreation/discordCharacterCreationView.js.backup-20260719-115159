@@ -292,7 +292,17 @@ function createComponentRows(
   return rows;
 }
 
-function createStageNavigationRow(view) {
+function createAttributesComponents(view) {
+  const adjustmentButtons =
+    createAttributeAdjustmentButtons(
+      view
+    );
+
+  const adjustmentRows =
+    createComponentRows(
+      adjustmentButtons
+    );
+
   const previousButton =
     new ButtonBuilder()
       .setCustomId(
@@ -323,29 +333,18 @@ function createStageNavigationRow(view) {
       .setLabel("Save and Exit")
       .setStyle(ButtonStyle.Secondary);
 
-  return new ActionRowBuilder()
-    .addComponents(
-      previousButton,
-      nextButton,
-      cancelButton
-    )
-    .toJSON();
-}
-
-function createAttributesComponents(view) {
-  const adjustmentButtons =
-    createAttributeAdjustmentButtons(
-      view
-    );
-
-  const adjustmentRows =
-    createComponentRows(
-      adjustmentButtons
-    );
+  const navigationRow =
+    new ActionRowBuilder()
+      .addComponents(
+        previousButton,
+        nextButton,
+        cancelButton
+      )
+      .toJSON();
 
   return [
     ...adjustmentRows,
-    createStageNavigationRow(view)
+    navigationRow
   ];
 }
 

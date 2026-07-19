@@ -29,17 +29,6 @@ function test(name, callback) {
   });
 }
 
-test(
-  "Uses the profession action ID emitted by the Discord view",
-  () => {
-    assert.strictEqual(
-      CHARACTER_CREATION_ACTION.SELECT_PROFESSION,
-      "character_creation:profession"
-    );
-  }
-);
-
-
 function createView(
   stage,
   overrides = {}

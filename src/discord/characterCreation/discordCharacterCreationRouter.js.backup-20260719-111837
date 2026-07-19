@@ -9,7 +9,7 @@ const CHARACTER_CREATION_ACTION = Object.freeze({
   SUBMIT_NAME:
     "character_creation:submit_name",
   SELECT_PROFESSION:
-    "character_creation:profession",
+    "character_creation:select_profession",
   PREVIOUS:
     "character_creation:previous",
   NEXT:
