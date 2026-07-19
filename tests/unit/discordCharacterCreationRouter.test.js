@@ -10,8 +10,10 @@ const {
   createDiscordCharacterCreationRouter,
   createInteractionIdentity,
   parseAttributeAction,
+  PROFESSION_CHOICE_ACTION_PREFIX,
   SKILL_ACTION_PREFIX,
   SKILL_PAGE_ACTION_PREFIX,
+  parseProfessionChoiceAction,
   parseSkillAction,
   parseSkillPageAction
 } = require(
@@ -190,6 +192,29 @@ function createSessionHarness() {
         values: Object.freeze({
           ...currentView.values,
           professionId
+        })
+      });
+
+      return currentView;
+    },
+    setProfessionChoice({
+      choiceId,
+      value
+    }) {
+      calls.push({
+        method:
+          "setProfessionChoice",
+        input: {
+          choiceId,
+          value
+        }
+      });
+
+      currentView = Object.freeze({
+        ...currentView,
+        values: Object.freeze({
+          ...currentView.values,
+          [choiceId]: value
         })
       });
 
@@ -1542,6 +1567,40 @@ test(
 );
 
 test(
+  "Parses profession choice interaction actions",
+  () => {
+    assert.deepStrictEqual(
+      parseProfessionChoiceAction(
+        `${PROFESSION_CHOICE_ACTION_PREFIX}weaponType`
+      ),
+      {
+        choiceId: "weaponType"
+      }
+    );
+
+    assert.strictEqual(
+      parseProfessionChoiceAction(
+        `${PROFESSION_CHOICE_ACTION_PREFIX}`
+      ),
+      null
+    );
+
+    assert.strictEqual(
+      parseProfessionChoiceAction(
+        `${PROFESSION_CHOICE_ACTION_PREFIX}weaponType:extra`
+      ),
+      null
+    );
+
+    assert.strictEqual(
+      parseProfessionChoiceAction(
+        "character_creation:unrelated"
+      ),
+      null
+    );
+  }
+);
+test(
   "Selects a profession from a Discord select menu",
   async () => {
     const {
@@ -1647,6 +1706,204 @@ test(
   }
 );
 
+test(
+  "Selects a profession choice from a Discord select menu",
+  async () => {
+    const {
+      router,
+      registryHarness,
+      renderCalls
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    registryHarness
+      .sessionHarness
+      .session
+      .moveToProfession();
+
+    const {
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        `${PROFESSION_CHOICE_ACTION_PREFIX}weaponType`,
+
+      values: [
+        "pistol"
+      ],
+
+      isStringSelectMenu() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.strictEqual(
+      result.handled,
+      true
+    );
+
+    assert.strictEqual(
+      result.action,
+      "select_profession_choice"
+    );
+
+    assert.strictEqual(
+      result.choiceId,
+      "weaponType"
+    );
+
+    assert.strictEqual(
+      result.value,
+      "pistol"
+    );
+
+    assert.strictEqual(
+      result.view.stage,
+      "profession"
+    );
+
+    assert.strictEqual(
+      result.view.values.weaponType,
+      "pistol"
+    );
+
+    const setCall =
+      registryHarness
+        .sessionHarness
+        .calls
+        .find(
+          (call) =>
+            call.method ===
+            "setProfessionChoice"
+        );
+
+    assert.deepStrictEqual(
+      setCall,
+      {
+        method:
+          "setProfessionChoice",
+        input: {
+          choiceId:
+            "weaponType",
+          value:
+            "pistol"
+        }
+      }
+    );
+
+    assert.strictEqual(
+      renderCalls.length,
+      1
+    );
+
+    const updateCalls =
+      calls.filter(
+        (call) =>
+          call.method === "update"
+      );
+
+    assert.strictEqual(
+      updateCalls.length,
+      1
+    );
+  }
+);
+
+test(
+  "Rejects profession choice selections without exactly one value",
+  async () => {
+    const {
+      router,
+      registryHarness
+    } = createRouterHarness();
+
+    const identity =
+      createIdentity();
+
+    registryHarness.registry.seed(
+      identity
+    );
+
+    registryHarness
+      .sessionHarness
+      .session
+      .moveToProfession();
+
+    const {
+      interaction
+    } = createInteraction({
+      customId:
+        `${PROFESSION_CHOICE_ACTION_PREFIX}weaponType`,
+
+      values: [],
+
+      isStringSelectMenu() {
+        return true;
+      }
+    });
+
+    await assert.rejects(
+      () =>
+        router.route(
+          interaction
+        ),
+      /must contain exactly one value/
+    );
+  }
+);
+
+test(
+  "Returns unhandled for malformed profession choice select menus",
+  async () => {
+    const {
+      router
+    } = createRouterHarness();
+
+    const {
+      interaction,
+      calls
+    } = createInteraction({
+      customId:
+        PROFESSION_CHOICE_ACTION_PREFIX,
+
+      values: [
+        "pistol"
+      ],
+
+      isStringSelectMenu() {
+        return true;
+      }
+    });
+
+    const result =
+      await router.route(
+        interaction
+      );
+
+    assert.deepStrictEqual(
+      result,
+      {
+        handled: false
+      }
+    );
+
+    assert.strictEqual(
+      calls.length,
+      0
+    );
+  }
+);
 test(
   "Returns unhandled for unrelated select menus",
   async () => {

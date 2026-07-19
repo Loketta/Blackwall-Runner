@@ -22,7 +22,8 @@ const SKILL_ACTION_PREFIX =
   "character_creation:skill:";
 const ATTRIBUTE_ACTION_PREFIX =
   "character_creation:attribute:";
-const CHARACTER_NAME_INPUT_ID =
+const PROFESSION_CHOICE_ACTION_PREFIX =
+  "character_creation:profession_choice:";const CHARACTER_NAME_INPUT_ID =
   "character_name";
 
 function requireObject(
@@ -158,6 +159,34 @@ function parseSkillPageAction(
   });
 }
 
+function parseProfessionChoiceAction(
+  customId
+) {
+  if (
+    typeof customId !== "string" ||
+    !customId.startsWith(
+      PROFESSION_CHOICE_ACTION_PREFIX
+    )
+  ) {
+    return null;
+  }
+
+  const choiceId =
+    customId.slice(
+      PROFESSION_CHOICE_ACTION_PREFIX.length
+    ).trim();
+
+  if (
+    choiceId === "" ||
+    choiceId.includes(":")
+  ) {
+    return null;
+  }
+
+  return Object.freeze({
+    choiceId
+  });
+}
 function parseAttributeAction(
   customId
 ) {
@@ -638,6 +667,83 @@ async function handleSkillPageAction(
     });
   }
 
+  async function handleProfessionChoice(
+    interaction,
+    action
+  ) {
+    const identity =
+      createInteractionIdentity(
+        interaction
+      );
+
+    const session =
+      requireSession(
+        sessionRegistry,
+        identity
+      );
+
+    requireFunction(
+      session.getCurrentView,
+      "session.getCurrentView"
+    );
+
+    requireFunction(
+      session.setProfessionChoice,
+      "session.setProfessionChoice"
+    );
+
+    const currentView =
+      session.getCurrentView();
+
+    if (
+      currentView.stage !==
+        "profession"
+    ) {
+      throw new Error(
+        "Profession choice controls are only available during the profession stage"
+      );
+    }
+
+    const values =
+      Array.isArray(
+        interaction.values
+      )
+        ? interaction.values
+        : [];
+
+    if (values.length !== 1) {
+      throw new Error(
+        "Profession choice selection must contain exactly one value"
+      );
+    }
+
+    const value =
+      requireNonEmptyString(
+        values[0],
+        "interaction.values[0]"
+      );
+
+    const view =
+      session.setProfessionChoice({
+        choiceId:
+          action.choiceId,
+        value
+      });
+
+    await interaction.update(
+      renderView(view)
+    );
+
+    return Object.freeze({
+      handled: true,
+      action:
+        "select_profession_choice",
+      choiceId:
+        action.choiceId,
+      value,
+      view
+    });
+  }
   async function handleAttributeAction(
     interaction,
     action
@@ -981,6 +1087,26 @@ if (
 
 
     if (
+      interaction.isStringSelectMenu()
+    ) {
+      const professionChoiceAction =
+        parseProfessionChoiceAction(
+          interaction.customId
+        );
+
+      if (professionChoiceAction) {
+        requireFunction(
+          interaction.update,
+          "interaction.update"
+        );
+
+        return handleProfessionChoice(
+          interaction,
+          professionChoiceAction
+        );
+      }
+    }
+    if (
       interaction.isModalSubmit() &&
       interaction.customId ===
         CHARACTER_CREATION_ACTION.SUBMIT_NAME
@@ -1010,11 +1136,13 @@ module.exports = {
   CHARACTER_CREATION_ACTION,
   CHARACTER_NAME_INPUT_ID,
   CREATE_CHARACTER_COMMAND,
+  PROFESSION_CHOICE_ACTION_PREFIX,
   SKILL_ACTION_PREFIX,
   SKILL_PAGE_ACTION_PREFIX,
   createDiscordCharacterCreationRouter,
   createInteractionIdentity,
   parseAttributeAction,
+  parseProfessionChoiceAction,
   parseSkillAction,
   parseSkillPageAction
 };
