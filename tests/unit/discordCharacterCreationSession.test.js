@@ -111,7 +111,7 @@ function createControllerHarness() {
     );
   const updatedProfessionChoiceView =
     createView(
-      "profession",
+      "profession_choices",
       {
         stageNumber: 4,
         canMovePrevious: true,
@@ -209,7 +209,7 @@ function createControllerHarness() {
       }
       if (
         currentView.stage ===
-          "profession" &&
+          "profession_choices" &&
         input.choiceId ===
           "weaponType" &&
         input.value ===
@@ -298,6 +298,19 @@ function createControllerHarness() {
     },
     moveToProfession() {
       currentView = professionView;
+    },
+    moveToProfessionChoices() {
+      currentView = createView(
+        "profession_choices",
+        {
+          stageNumber: 5,
+          canMovePrevious: true,
+          values: {
+            professionId: "operator",
+            weaponType: null
+          }
+        }
+      );
     },
     moveToReview() {
       currentView = reviewView;
@@ -819,7 +832,7 @@ test(
       ownerId: "discord-user-1"
     });
 
-    controllerHarness.moveToProfession();
+    controllerHarness.moveToProfessionChoices();
 
     session.getCurrentView();
 
@@ -831,7 +844,7 @@ test(
 
     assert.strictEqual(
       view.stage,
-      "profession"
+      "profession_choices"
     );
 
     assert.strictEqual(
@@ -861,7 +874,7 @@ test(
 );
 
 test(
-  "Rejects profession choice updates outside the profession stage",
+  "Rejects profession choice updates outside the profession choices stage",
   () => {
     const {
       session
@@ -877,7 +890,7 @@ test(
           choiceId: "weaponType",
           value: "pistol"
         }),
-      /only be updated during the profession stage/
+      /only be updated during the profession choices stage/
     );
   }
 );
@@ -894,7 +907,7 @@ test(
       ownerId: "discord-user-1"
     });
 
-    controllerHarness.moveToProfession();
+    controllerHarness.moveToProfessionChoices();
 
     session.getCurrentView();
 
@@ -930,7 +943,7 @@ test(
       ownerId: "discord-user-1"
     });
 
-    controllerHarness.moveToProfession();
+    controllerHarness.moveToProfessionChoices();
 
     session.getCurrentView();
 

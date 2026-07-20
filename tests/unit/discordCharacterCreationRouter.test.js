@@ -174,7 +174,23 @@ function createSessionHarness() {
       });
 
       return currentView;
-    },    moveToSkills() {
+    },    moveToProfessionChoices() {
+      currentView = Object.freeze({
+        stage: "profession_choices",
+        stageNumber: 5,
+        stageCount: 7,
+        title: "Profession Choices",
+        description: "",
+        canMoveNext: true,
+        canMovePrevious: true,
+        values: Object.freeze({
+          weaponType: null
+        })
+      });
+
+      return currentView;
+    },
+    moveToSkills() {
       currentView = skillView;
     },
     submitName(name) {
@@ -1736,7 +1752,7 @@ test(
     registryHarness
       .sessionHarness
       .session
-      .moveToProfession();
+      .moveToProfessionChoices();
 
     const {
       interaction,
@@ -1781,7 +1797,7 @@ test(
 
     assert.strictEqual(
       result.view.stage,
-      "profession"
+      "profession_choices"
     );
 
     assert.strictEqual(
@@ -1849,7 +1865,7 @@ test(
     registryHarness
       .sessionHarness
       .session
-      .moveToProfession();
+      .moveToProfessionChoices();
 
     const {
       interaction

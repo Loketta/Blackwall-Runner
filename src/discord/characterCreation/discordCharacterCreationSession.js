@@ -266,9 +266,9 @@ function createDiscordCharacterCreationSession({
   }) {
     requireStarted();
 
-    if (currentView.stage !== "profession") {
+    if (currentView.stage !== "profession_choices") {
       throw new Error(
-        "Profession choices can only be updated during the profession stage."
+        "Profession choices can only be updated during the profession choices stage."
       );
     }
 

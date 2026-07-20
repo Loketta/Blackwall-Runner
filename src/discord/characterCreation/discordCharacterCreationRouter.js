@@ -696,11 +696,10 @@ async function handleSkillPageAction(
       session.getCurrentView();
 
     if (
-      currentView.stage !==
-        "profession"
+      currentView.stage !== "profession_choices"
     ) {
       throw new Error(
-        "Profession choice controls are only available during the profession stage"
+        "Profession choice controls are only available during the profession choices stage"
       );
     }
 
