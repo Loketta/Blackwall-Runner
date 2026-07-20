@@ -1153,7 +1153,7 @@ function createProfessionChoiceComponents(
     return [];
   }
 
-  if (selectableChoices.length > 5) {
+  if (selectableChoices.length > 4) {
     throw new Error(
       "Profession choices exceed the Discord component row limit."
     );
@@ -1344,9 +1344,12 @@ function createProfessionChoicesPayload(view) {
     embeds: [
       embed.toJSON()
     ],
-    components: createProfessionChoiceComponents(
+    components: [
+      ...createProfessionChoiceComponents(
         choices
-      )
+      ),
+      createStageNavigationRow(view)
+    ]
   });
 }
 function formatKeyValueLines(values) {
