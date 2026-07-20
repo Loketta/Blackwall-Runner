@@ -437,7 +437,7 @@ test(
 
     assert.strictEqual(
       payload.components.length,
-      1
+      2
     );
 
     const row = payload.components[0];
@@ -470,6 +470,37 @@ test(
         label: "Save and Exit",
         style: ButtonStyle.Secondary
       }
+    );
+
+    const navigationRow =
+      payload.components[1];
+
+    assert.strictEqual(
+      navigationRow.type,
+      ComponentType.ActionRow
+    );
+
+    assert.strictEqual(
+      navigationRow.components.length,
+      3
+    );
+
+    assert.strictEqual(
+      navigationRow.components[0].custom_id,
+      DISCORD_CHARACTER_CREATION_ACTION
+        .PREVIOUS
+    );
+
+    assert.strictEqual(
+      navigationRow.components[1].custom_id,
+      DISCORD_CHARACTER_CREATION_ACTION
+        .NEXT
+    );
+
+    assert.strictEqual(
+      navigationRow.components[2].custom_id,
+      DISCORD_CHARACTER_CREATION_ACTION
+        .CANCEL
     );
   }
 );

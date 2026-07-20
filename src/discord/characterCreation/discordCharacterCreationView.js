@@ -1060,7 +1060,8 @@ function createProfessionComponents(
       .addComponents(
         professionMenu
       )
-      .toJSON()
+      .toJSON(),
+    createStageNavigationRow(view)
   ];
 }
 function createProfessionPayload(view) {
